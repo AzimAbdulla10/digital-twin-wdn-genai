@@ -1,0 +1,366 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import type {
+  NetworkTopology,
+  NetworkNode,
+  NetworkLink,
+  SimulationResults,
+  AIAlert,
+} from './types';
+import { fetchNetworkTopology, runBaselineSimulation, injectLeak } from './api';
+import { NetworkMap } from './components/NetworkMap';
+import { PressureChart } from './components/PressureChart';
+import { LeakControlPanel } from './components/LeakControlPanel';
+import { AIAlertCard } from './components/AIAlertCard';
+import {
+  Droplet,
+  RefreshCw,
+  Clock,
+  Layers,
+} from 'lucide-react';
+
+export const App: React.FC = () => {
+  const [topology, setTopology] = useState<NetworkTopology | null>(null);
+  const [baselineResults, setBaselineResults] = useState<SimulationResults | null>(null);
+  const [currentResults, setCurrentResults] = useState<SimulationResults | null>(null);
+
+  const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
+  const [selectedLink, setSelectedLink] = useState<NetworkLink | null>(null);
+  const [leakNodeId, setLeakNodeId] = useState<string | null>(null);
+  const [currentTimestep, setCurrentTimestep] = useState<number>(12); // Hour 12:00 noon
+
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Initial load: Fetch topology and run baseline simulation
+  useEffect(() => {
+    async function initData() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const net = await fetchNetworkTopology();
+        setTopology(net);
+
+        // Select junction 11 by default
+        const defaultNode = net.nodes.find((n) => n.id === '11') || net.nodes[0];
+        setSelectedNode(defaultNode);
+
+        const sim = await runBaselineSimulation();
+        setBaselineResults(sim);
+        setCurrentResults(sim);
+      } catch (err: any) {
+        setError(err.message || 'Failed to connect to backend.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    initData();
+  }, []);
+
+  // Compute AI Alert state based on simulation results (Rule-based Ensemble V1)
+  const aiAlert = useMemo<AIAlert>(() => {
+    if (!leakNodeId || !baselineResults || !currentResults) {
+      return {
+        isLeakDetected: false,
+        probability: 0.02,
+        severity: 'NORMAL',
+        detectedNode: null,
+        timestamp: '12:00:00',
+        pressureDrop: 0,
+        message: 'Normal hydraulic equilibrium maintained. All node pressures within ±1.5% of baseline envelope.',
+      };
+    }
+
+    const baselineP = baselineResults.pressures[leakNodeId]?.[currentTimestep] || 0;
+    const currentP = currentResults.pressures[leakNodeId]?.[currentTimestep] || 0;
+    const drop = baselineP - currentP;
+
+    // Rule-based diagnostic logic
+    const prob = drop > 25 ? 0.94 : drop > 10 ? 0.82 : 0.65;
+    const severity = drop > 20 ? 'CRITICAL' : drop > 10 ? 'WARNING' : 'NORMAL';
+
+    return {
+      isLeakDetected: true,
+      probability: prob,
+      severity,
+      detectedNode: leakNodeId,
+      timestamp: `${currentTimestep}:00:00`,
+      pressureDrop: drop,
+      message: `Critical pressure anomaly detected at Junction ${leakNodeId}. Pressure dropped by ${drop.toFixed(
+        1
+      )} m (${((drop / (baselineP || 1)) * 100).toFixed(0)}% decrease) with localized flow divergence.`,
+    };
+  }, [leakNodeId, baselineResults, currentResults, currentTimestep]);
+
+  // Handler: Inject Leak
+  const handleInjectLeak = async (nodeId: string, leakArea: number) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setLeakNodeId(nodeId);
+
+      // Auto-select the leak node on the map
+      const node = topology?.nodes.find((n) => n.id === nodeId);
+      if (node) setSelectedNode(node);
+
+      const sim = await injectLeak(nodeId, leakArea);
+      setCurrentResults(sim);
+    } catch (err: any) {
+      setError(err.message || 'Failed to run leak simulation.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handler: Reset Simulation
+  const handleReset = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setLeakNodeId(null);
+      if (baselineResults) {
+        setCurrentResults(baselineResults);
+      } else {
+        const sim = await runBaselineSimulation();
+        setBaselineResults(sim);
+        setCurrentResults(sim);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-white">
+      {/* Header Bar */}
+      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-6 py-3.5 flex items-center justify-between">
+        {/* Brand */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <Droplet className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-bold text-slate-100 tracking-tight m-0">
+                HydroTwin AI
+              </h1>
+              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                v1.0 Digital Twin
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 m-0">
+              AI-Driven Water Distribution Twin • WNTR + EPANET + GPT
+            </p>
+          </div>
+        </div>
+
+        {/* Timestep Scrubber & Global Status */}
+        <div className="flex items-center gap-6">
+          {/* 24-Hour Timeline Scrubber */}
+          <div className="flex items-center gap-3 bg-slate-900/90 border border-slate-800 px-3.5 py-1.5 rounded-xl shadow-inner">
+            <Clock className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-medium text-slate-300">Timeline:</span>
+            <input
+              type="range"
+              min="0"
+              max="24"
+              value={currentTimestep}
+              onChange={(e) => setCurrentTimestep(parseInt(e.target.value))}
+              className="w-28 accent-cyan-400 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
+            />
+            <span className="text-xs font-mono font-bold text-cyan-300 w-12">
+              {currentTimestep.toString().padStart(2, '0')}:00
+            </span>
+          </div>
+
+          {/* Connection Status Badge */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-slate-300 font-mono">Backend: 8000</span>
+          </div>
+
+          {/* Reset / Reload button */}
+          <button
+            onClick={handleReset}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-all active:scale-95 cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Sync</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1700px] w-full mx-auto">
+        {/* Error Alert if any */}
+        {error && (
+          <div className="lg:col-span-12 p-4 rounded-xl bg-red-950/50 border border-red-500/40 text-red-300 text-sm flex items-center justify-between">
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="text-xs underline hover:text-white cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* Left Column: Network Map & Pressure Charts (7 Cols) */}
+        <div className="lg:col-span-7 flex flex-col gap-6">
+          {/* Top: SVG Network Visualizer */}
+          <div className="flex-1 min-h-[480px]">
+            <NetworkMap
+              nodes={topology?.nodes || []}
+              links={topology?.links || []}
+              selectedNode={selectedNode}
+              onSelectNode={(node) => {
+                setSelectedNode(node);
+                setSelectedLink(null);
+              }}
+              selectedLink={selectedLink}
+              onSelectLink={(link) => {
+                setSelectedLink(link);
+              }}
+              leakNodeId={leakNodeId}
+              simulationResults={currentResults}
+              currentTimestep={currentTimestep}
+            />
+          </div>
+
+          {/* Bottom: Recharts Pressure Time-Series */}
+          <div>
+            <PressureChart
+              selectedNode={selectedNode}
+              baselineResults={baselineResults}
+              currentResults={currentResults}
+              leakNodeId={leakNodeId}
+              currentTimestep={currentTimestep}
+            />
+          </div>
+        </div>
+
+        {/* Right Column: AI Diagnostics, Leak Controls & Inspectors (5 Cols) */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          {/* AI Alert Card */}
+          <AIAlertCard
+            alert={aiAlert}
+            onAskGPT={() => {
+              alert(
+                `Phase 3 Preview: Calling GPT with:\nJunction: J${leakNodeId}\nPressure Drop: ${aiAlert.pressureDrop.toFixed(
+                  1
+                )} m\nProbability: ${(aiAlert.probability * 100).toFixed(0)}%`
+              );
+            }}
+          />
+
+          {/* Leak Injection Sandbox */}
+          <LeakControlPanel
+            junctions={topology?.nodes || []}
+            onInjectLeak={handleInjectLeak}
+            onReset={handleReset}
+            activeLeakNodeId={leakNodeId}
+            isLoading={isLoading}
+          />
+
+          {/* Node & Pipe Inspector */}
+          <div className="bg-slate-950/90 rounded-2xl border border-slate-800 p-5 flex flex-col shadow-xl">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <Layers className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-100">Telemetry Inspector</h3>
+                <p className="text-xs text-slate-400">Live element hydraulics at {currentTimestep}:00</p>
+              </div>
+            </div>
+
+            {selectedNode ? (
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Selected Element</span>
+                  <span className="font-mono font-bold text-slate-200 text-sm">
+                    {selectedNode.type === 'junction'
+                      ? `Junction J${selectedNode.id}`
+                      : `${selectedNode.type.toUpperCase()} ${selectedNode.id}`}
+                  </span>
+                </div>
+
+                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Elevation</span>
+                  <span className="font-mono font-bold text-cyan-300 text-sm">
+                    {selectedNode.elevation.toFixed(1)} m
+                  </span>
+                </div>
+
+                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Live Pressure</span>
+                  <span
+                    className={`font-mono font-bold text-sm ${
+                      leakNodeId === selectedNode.id ? 'text-red-400' : 'text-emerald-300'
+                    }`}
+                  >
+                    {(
+                      currentResults?.pressures[selectedNode.id]?.[currentTimestep] || 0
+                    ).toFixed(2)}{' '}
+                    m
+                  </span>
+                </div>
+
+                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Base Demand</span>
+                  <span className="font-mono font-bold text-slate-200 text-sm">
+                    {selectedNode.demand.toFixed(1)} L/s
+                  </span>
+                </div>
+              </div>
+            ) : selectedLink ? (
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Link ID</span>
+                  <span className="font-mono font-bold text-slate-200 text-sm">
+                    Pipe P{selectedLink.id} ({selectedLink.source} → {selectedLink.target})
+                  </span>
+                </div>
+
+                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Flow Rate</span>
+                  <span className="font-mono font-bold text-cyan-300 text-sm">
+                    {(currentResults?.flows[selectedLink.id]?.[currentTimestep] || 0).toFixed(
+                      2
+                    )}{' '}
+                    L/s
+                  </span>
+                </div>
+
+                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Diameter</span>
+                  <span className="font-mono font-bold text-slate-200 text-sm">
+                    {selectedLink.diameter.toFixed(0)} mm
+                  </span>
+                </div>
+
+                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
+                  <span className="text-slate-400 block mb-1">Length</span>
+                  <span className="font-mono font-bold text-slate-200 text-sm">
+                    {selectedLink.length.toFixed(0)} m
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-500 py-4 text-center">
+                Click any node or pipe on the map to inspect properties.
+              </p>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default App;

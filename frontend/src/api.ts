@@ -1,0 +1,36 @@
+import type { NetworkTopology, SimulationResults } from './types';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+export async function fetchNetworkTopology(): Promise<NetworkTopology> {
+  const res = await fetch(`${API_BASE_URL}/network`);
+  if (!res.ok) {
+    throw new Error(`Failed to load network topology: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function runBaselineSimulation(): Promise<SimulationResults> {
+  const res = await fetch(`${API_BASE_URL}/simulate`);
+  if (!res.ok) {
+    throw new Error(`Failed to run baseline simulation: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function injectLeak(nodeId: string, leakArea: number = 0.005): Promise<SimulationResults> {
+  const res = await fetch(`${API_BASE_URL}/inject-leak`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      node_id: nodeId,
+      leak_area: leakArea,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to inject leak: ${res.statusText}`);
+  }
+  return res.json();
+}
