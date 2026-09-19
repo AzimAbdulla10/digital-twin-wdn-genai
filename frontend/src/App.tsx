@@ -350,7 +350,6 @@ export const App: React.FC = () => {
                 currentTimestep={currentTimestep}
                 temperature={temperature}
                 isWeekend={isWeekend}
-                onScenarioChange={handleScenarioChange}
               />
             )}
           </div>

@@ -12,20 +12,18 @@ import {
 } from 'recharts';
 import type { DemandForecastResponse } from '../types';
 import { fetchDemandForecast } from '../api';
-import { TrendingUp, Thermometer, AlertCircle, BarChart3, Sun, Moon, Loader2 } from 'lucide-react';
+import { TrendingUp, AlertCircle, BarChart3, Sun, Moon, Loader2, ThermometerSun } from 'lucide-react';
 
 interface DemandForecastChartProps {
   currentTimestep: number;
   temperature?: number;
   isWeekend?: number;
-  onScenarioChange?: (temp: number, weekend: number) => void;
 }
 
 export const DemandForecastChart: React.FC<DemandForecastChartProps> = ({
   currentTimestep,
   temperature = 22.0,
   isWeekend = 0,
-  onScenarioChange,
 }) => {
   const [forecastData, setForecastData] = useState<DemandForecastResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -79,35 +77,14 @@ export const DemandForecastChart: React.FC<DemandForecastChartProps> = ({
           </div>
         </div>
 
-        {/* Environmental Tuning Controls */}
-        <div className="flex items-center gap-3 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
-          {/* Temperature Slider */}
-          <div className="flex items-center gap-1.5">
-            <Thermometer className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-slate-400">Temp:</span>
-            <input
-              type="range"
-              min="10"
-              max="42"
-              step="1"
-              value={temperature}
-              onChange={(e) => onScenarioChange?.(parseFloat(e.target.value), isWeekend)}
-              className="w-16 accent-amber-400 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
-            />
-            <span className="font-mono text-amber-300 w-8">{temperature}°C</span>
-          </div>
-
-          {/* Weekend Toggle */}
-          <button
-            onClick={() => onScenarioChange?.(temperature, isWeekend === 1 ? 0 : 1)}
-            className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors ${
-              isWeekend === 1
-                ? 'bg-purple-500/20 border-purple-500/40 text-purple-200'
-                : 'bg-slate-800 border-slate-700 text-slate-300'
-            }`}
-          >
-            {isWeekend === 1 ? 'Weekend' : 'Weekday'}
-          </button>
+        {/* Synced Scenario Condition Badge */}
+        <div className="flex items-center gap-2 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-800 text-xs text-slate-300 font-mono">
+          <ThermometerSun className="w-3.5 h-3.5 text-amber-400" />
+          <span className="text-amber-300 font-bold">{temperature}°C</span>
+          <span className="text-slate-600">•</span>
+          <span className={isWeekend ? 'text-purple-300' : 'text-slate-400'}>
+            {isWeekend ? 'Weekend Pattern' : 'Weekday Pattern'}
+          </span>
         </div>
       </div>
 
