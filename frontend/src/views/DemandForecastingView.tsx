@@ -19,9 +19,7 @@ import {
   Loader2,
   Database,
   Award,
-  Calendar,
   Layers,
-  Thermometer,
   Zap,
 } from 'lucide-react';
 
@@ -140,36 +138,21 @@ export const DemandForecastingView: React.FC<DemandForecastingViewProps> = ({
 
       {/* Main Full-Width Forecast Chart */}
       <div className="bg-slate-950/90 rounded-2xl border border-slate-800 p-6 flex flex-col shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                24-Hour Predictive Municipal Demand Curve
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
-                  HistGradientBoostingRegressor
-                </span>
-                {isLoading && <Loader2 className="w-4 h-4 animate-spin text-purple-400" />}
-              </h2>
-              <p className="text-xs text-slate-400">
-                Weather-correlated time-series regression with 95% confidence intervals
-              </p>
-            </div>
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <TrendingUp className="w-5 h-5" />
           </div>
-
-          {/* Active Scenario Condition Display */}
-          <div className="flex items-center gap-3 bg-slate-900/90 px-3.5 py-1.5 rounded-xl border border-slate-800 text-xs">
-            <div className="flex items-center gap-1.5 text-amber-300">
-              <Thermometer className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-mono font-semibold">{temperature}°C Ambient</span>
-            </div>
-            <span className="text-slate-700">|</span>
-            <div className="flex items-center gap-1.5 text-purple-300">
-              <Calendar className="w-3.5 h-3.5 text-purple-400" />
-              <span>{isWeekend === 1 ? 'Weekend Pattern' : 'Weekday Pattern'}</span>
-            </div>
+          <div>
+            <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              24-Hour Predictive Municipal Demand Curve
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
+                HistGradientBoostingRegressor
+              </span>
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin text-purple-400" />}
+            </h2>
+            <p className="text-xs text-slate-400">
+              Weather-correlated time-series regression with 95% confidence intervals
+            </p>
           </div>
         </div>
 
