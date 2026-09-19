@@ -8,19 +8,18 @@ import type {
   MLPrediction,
 } from './types';
 import { fetchNetworkTopology, runBaselineSimulation, injectLeak, detectLeak } from './api';
-import { NetworkMap } from './components/NetworkMap';
-import { PressureChart } from './components/PressureChart';
-import { DemandForecastChart } from './components/DemandForecastChart';
-import { LeakControlPanel } from './components/LeakControlPanel';
-import { AIAlertCard } from './components/AIAlertCard';
+import { HydraulicTwinView } from './views/HydraulicTwinView';
+import { DemandForecastingView } from './views/DemandForecastingView';
+import { GenAIAssistantView } from './views/GenAIAssistantView';
 import { ScenarioControlBar } from './components/ScenarioControlBar';
 import {
   Droplet,
   RefreshCw,
   Clock,
-  Layers,
   Activity,
   TrendingUp,
+  Bot,
+  Sparkles,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -33,7 +32,9 @@ export const App: React.FC = () => {
   const [selectedLink, setSelectedLink] = useState<NetworkLink | null>(null);
   const [leakNodeId, setLeakNodeId] = useState<string | null>(null);
   const [currentTimestep, setCurrentTimestep] = useState<number>(12); // Hour 12:00 noon
-  const [activeTab, setActiveTab] = useState<'pressure' | 'demand'>('pressure');
+  
+  // Top-Level Navigation View: 'twin' | 'forecast' | 'genai'
+  const [currentView, setCurrentView] = useState<'twin' | 'forecast' | 'genai'>('twin');
 
   // Scenario and Environmental States
   const [temperature, setTemperature] = useState<number>(22.0);
@@ -161,7 +162,6 @@ export const App: React.FC = () => {
       setError(null);
       setLeakNodeId(nodeId);
 
-      // Auto-select the leak node on the map
       const node = topology?.nodes.find((n) => n.id === nodeId);
       if (node) setSelectedNode(node);
 
@@ -198,8 +198,8 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-white">
-      {/* Header Bar */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/80 px-6 py-3.5 flex items-center justify-between">
+      {/* Top Main Navigation Header Bar */}
+      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 px-6 py-3 flex flex-wrap items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
@@ -220,39 +220,71 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Timestep Scrubber & Global Status */}
-        <div className="flex items-center gap-6">
+        {/* Top-Level Navigation Modules */}
+        <nav className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800 shadow-inner">
+          <button
+            onClick={() => setCurrentView('twin')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              currentView === 'twin'
+                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
+                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+            }`}
+          >
+            <Activity className="w-4 h-4" />
+            <span>Hydraulic Twin & Leak Detection</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView('forecast')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              currentView === 'forecast'
+                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm shadow-purple-500/10'
+                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>Urban Demand Forecasting (BWDF)</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView('genai')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              currentView === 'genai'
+                ? 'bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+            }`}
+          >
+            <Bot className="w-4 h-4 text-cyan-400" />
+            <span>GenAI Operator Assistant</span>
+            <Sparkles className="w-3 h-3 text-cyan-400" />
+          </button>
+        </nav>
+
+        {/* Global Controls & Status */}
+        <div className="flex items-center gap-4">
           {/* 24-Hour Timeline Scrubber */}
-          <div className="flex items-center gap-3 bg-slate-900/90 border border-slate-800 px-3.5 py-1.5 rounded-xl shadow-inner">
+          <div className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl shadow-inner">
             <Clock className="w-4 h-4 text-cyan-400" />
-            <span className="text-xs font-medium text-slate-300">Timeline:</span>
+            <span className="text-xs text-slate-300 font-medium">Timeline:</span>
             <input
               type="range"
               min="0"
               max="24"
               value={currentTimestep}
               onChange={(e) => setCurrentTimestep(parseInt(e.target.value))}
-              className="w-28 accent-cyan-400 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
+              className="w-24 accent-cyan-400 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
             />
-            <span className="text-xs font-mono font-bold text-cyan-300 w-12">
+            <span className="text-xs font-mono font-bold text-cyan-300 w-11">
               {currentTimestep.toString().padStart(2, '0')}:00
             </span>
           </div>
 
-          {/* Connection Status Badge */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-slate-300 font-mono">Backend: 8000</span>
-          </div>
-
-          {/* Reset / Reload button */}
+          {/* Reset button */}
           <button
             onClick={handleReset}
             disabled={isLoading}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-all active:scale-95 cursor-pointer"
+            title="Reset to baseline"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Sync</span>
@@ -260,21 +292,23 @@ export const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Predictive Scenario Control Toolbar */}
-      <ScenarioControlBar
-        temperature={temperature}
-        isWeekend={isWeekend}
-        onScenarioChange={handleScenarioChange}
-        activePreset={activePreset}
-        riskAssessment={currentResults?.risk_assessment}
-        isLoading={isLoading}
-      />
+      {/* Scenario Control Toolbar (Shown on Twin and Forecast views) */}
+      {currentView !== 'genai' && (
+        <ScenarioControlBar
+          temperature={temperature}
+          isWeekend={isWeekend}
+          onScenarioChange={handleScenarioChange}
+          activePreset={activePreset}
+          riskAssessment={currentResults?.risk_assessment}
+          isLoading={isLoading}
+        />
+      )}
 
-      {/* Main Content Area */}
-      <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1700px] w-full mx-auto">
-        {/* Error Alert if any */}
+      {/* Main Viewport Container */}
+      <main className="flex-1 p-6 max-w-[1700px] w-full mx-auto">
+        {/* Error Banner */}
         {error && (
-          <div className="lg:col-span-12 p-4 rounded-xl bg-red-950/50 border border-red-500/40 text-red-300 text-sm flex items-center justify-between">
+          <div className="mb-6 p-4 rounded-xl bg-red-950/50 border border-red-500/40 text-red-300 text-sm flex items-center justify-between">
             <span>{error}</span>
             <button
               onClick={() => setError(null)}
@@ -285,190 +319,48 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Left Column: Network Map & Pressure Charts (7 Cols) */}
-        <div className="lg:col-span-7 flex flex-col gap-6">
-          {/* Top: SVG Network Visualizer */}
-          <div className="flex-1 min-h-[480px]">
-            <NetworkMap
-              nodes={topology?.nodes || []}
-              links={topology?.links || []}
-              selectedNode={selectedNode}
-              onSelectNode={(node) => {
-                setSelectedNode(node);
-                setSelectedLink(null);
-              }}
-              selectedLink={selectedLink}
-              onSelectLink={(link) => {
-                setSelectedLink(link);
-              }}
-              leakNodeId={leakNodeId}
-              simulationResults={currentResults}
-              currentTimestep={currentTimestep}
-            />
-          </div>
-
-          {/* Bottom: Analytics Tabs & Charts */}
-          <div className="flex flex-col gap-3">
-            {/* Chart Mode Switcher */}
-            <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800/80 p-1.5 rounded-xl w-fit">
-              <button
-                onClick={() => setActiveTab('pressure')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === 'pressure'
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 border border-transparent'
-                }`}
-              >
-                <Activity className="w-3.5 h-3.5" />
-                <span>Hydraulic Pressure Profile</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('demand')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === 'demand'
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 border border-transparent'
-                }`}
-              >
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>24h Demand Forecast (BWDF)</span>
-              </button>
-            </div>
-
-            {/* Active Chart View */}
-            {activeTab === 'pressure' ? (
-              <PressureChart
-                selectedNode={selectedNode}
-                baselineResults={baselineResults}
-                currentResults={currentResults}
-                leakNodeId={leakNodeId}
-                currentTimestep={currentTimestep}
-              />
-            ) : (
-              <DemandForecastChart
-                currentTimestep={currentTimestep}
-                temperature={temperature}
-                isWeekend={isWeekend}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: AI Diagnostics, Leak Controls & Inspectors (5 Cols) */}
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          {/* AI Alert Card */}
-          <AIAlertCard
-            alert={aiAlert}
-            disambiguation={currentResults?.disambiguation}
-            riskAssessment={currentResults?.risk_assessment}
-            onAskGPT={() => {
-              alert(
-                `Phase 4 Preview: Passing ML Telemetry to GPT:\n• Localized Node: Junction ${aiAlert.detectedNode}\n• ML Probability: ${(aiAlert.probability * 100).toFixed(1)}%\n• Max Pressure Drop: ${aiAlert.pressureDrop.toFixed(1)} m\n• Top Affected Sensors: ${aiAlert.topSensors?.map(s => `J${s.node} (-${s.drop}m)`).join(', ')}`
-              );
-            }}
-          />
-
-          {/* Leak Injection Sandbox */}
-          <LeakControlPanel
-            junctions={topology?.nodes || []}
+        {/* Tab 1: Hydraulic Twin & Leak Detection View */}
+        {currentView === 'twin' && (
+          <HydraulicTwinView
+            topology={topology}
+            baselineResults={baselineResults}
+            currentResults={currentResults}
+            selectedNode={selectedNode}
+            onSelectNode={setSelectedNode}
+            selectedLink={selectedLink}
+            onSelectLink={setSelectedLink}
+            leakNodeId={leakNodeId}
+            currentTimestep={currentTimestep}
+            aiAlert={aiAlert}
             onInjectLeak={handleInjectLeak}
             onReset={handleReset}
-            activeLeakNodeId={leakNodeId}
             isLoading={isLoading}
+            onNavigateToGenAI={() => setCurrentView('genai')}
           />
+        )}
 
-          {/* Node & Pipe Inspector */}
-          <div className="bg-slate-950/90 rounded-2xl border border-slate-800 p-5 flex flex-col shadow-xl">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                <Layers className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-100">Telemetry Inspector</h3>
-                <p className="text-xs text-slate-400">Live element hydraulics at {currentTimestep}:00</p>
-              </div>
-            </div>
+        {/* Tab 2: Urban Demand Forecasting View */}
+        {currentView === 'forecast' && (
+          <DemandForecastingView
+            currentTimestep={currentTimestep}
+            temperature={temperature}
+            isWeekend={isWeekend}
+            onScenarioChange={handleScenarioChange}
+            riskAssessment={currentResults?.risk_assessment}
+          />
+        )}
 
-            {selectedNode ? (
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block mb-1">Selected Element</span>
-                  <span className="font-mono font-bold text-slate-200 text-sm">
-                    {selectedNode.type === 'junction'
-                      ? `Junction J${selectedNode.id}`
-                      : `${selectedNode.type.toUpperCase()} ${selectedNode.id}`}
-                  </span>
-                </div>
-
-                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block mb-1">Elevation</span>
-                  <span className="font-mono font-bold text-cyan-300 text-sm">
-                    {selectedNode.elevation.toFixed(1)} m
-                  </span>
-                </div>
-
-                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block mb-1">Live Pressure</span>
-                  <span
-                    className={`font-mono font-bold text-sm ${
-                      leakNodeId === selectedNode.id ? 'text-red-400' : 'text-emerald-300'
-                    }`}
-                  >
-                    {(
-                      currentResults?.pressures[selectedNode.id]?.[currentTimestep] || 0
-                    ).toFixed(2)}{' '}
-                    m
-                  </span>
-                </div>
-
-                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block mb-1">Base Demand</span>
-                  <span className="font-mono font-bold text-slate-200 text-sm">
-                    {selectedNode.demand.toFixed(1)} L/s
-                  </span>
-                </div>
-              </div>
-            ) : selectedLink ? (
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block mb-1">Link ID</span>
-                  <span className="font-mono font-bold text-slate-200 text-sm">
-                    Pipe P{selectedLink.id} ({selectedLink.source} → {selectedLink.target})
-                  </span>
-                </div>
-
-                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block mb-1">Flow Rate</span>
-                  <span className="font-mono font-bold text-cyan-300 text-sm">
-                    {(currentResults?.flows[selectedLink.id]?.[currentTimestep] || 0).toFixed(
-                      2
-                    )}{' '}
-                    L/s
-                  </span>
-                </div>
-
-                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block mb-1">Diameter</span>
-                  <span className="font-mono font-bold text-slate-200 text-sm">
-                    {selectedLink.diameter.toFixed(0)} mm
-                  </span>
-                </div>
-
-                <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800">
-                  <span className="text-slate-400 block mb-1">Length</span>
-                  <span className="font-mono font-bold text-slate-200 text-sm">
-                    {selectedLink.length.toFixed(0)} m
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-slate-500 py-4 text-center">
-                Click any node or pipe on the map to inspect properties.
-              </p>
-            )}
-          </div>
-        </div>
+        {/* Tab 3: GenAI Decision Support Assistant View */}
+        {currentView === 'genai' && (
+          <GenAIAssistantView
+            currentResults={currentResults}
+            aiAlert={aiAlert}
+            leakNodeId={leakNodeId}
+            currentTimestep={currentTimestep}
+            temperature={temperature}
+            isWeekend={isWeekend}
+          />
+        )}
       </main>
     </div>
   );
