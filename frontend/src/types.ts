@@ -24,19 +24,40 @@ export interface NetworkTopology {
   links: NetworkLink[];
 }
 
+export interface TopAffectedNode {
+  node: string;
+  drop: number;
+}
+
+export interface MLPrediction {
+  is_leak: boolean;
+  leak_probability: number;
+  localized_node: string;
+  severity: 'NORMAL' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  confidence: number;
+  max_pressure_drop: number;
+  top_affected_nodes: TopAffectedNode[];
+  model_type: string;
+  model_accuracy: number;
+}
+
 export interface SimulationResults {
   times: number[];
   pressures: Record<string, number[]>;
   flows: Record<string, number[]>;
   leak_demands?: Record<string, number[]>;
+  ai_detection?: MLPrediction;
 }
 
 export interface AIAlert {
   isLeakDetected: boolean;
   probability: number;
-  severity: 'NORMAL' | 'WARNING' | 'CRITICAL';
+  severity: 'NORMAL' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   detectedNode: string | null;
   timestamp: string;
   pressureDrop: number;
   message: string;
+  modelType?: string;
+  modelAccuracy?: number;
+  topSensors?: TopAffectedNode[];
 }

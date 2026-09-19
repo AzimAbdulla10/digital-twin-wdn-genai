@@ -1,4 +1,4 @@
-import type { NetworkTopology, SimulationResults } from './types';
+import type { NetworkTopology, SimulationResults, MLPrediction } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -31,6 +31,26 @@ export async function injectLeak(nodeId: string, leakArea: number = 0.005): Prom
   });
   if (!res.ok) {
     throw new Error(`Failed to inject leak: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function detectLeak(
+  currentPressures: Record<string, number>,
+  baselinePressures?: Record<string, number>
+): Promise<MLPrediction> {
+  const res = await fetch(`${API_BASE_URL}/detect-leak`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      current_pressures: currentPressures,
+      baseline_pressures: baselinePressures,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to run ML detection: ${res.statusText}`);
   }
   return res.json();
 }

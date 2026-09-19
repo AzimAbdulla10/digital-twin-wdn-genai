@@ -5,8 +5,9 @@ import type {
   NetworkLink,
   SimulationResults,
   AIAlert,
+  MLPrediction,
 } from './types';
-import { fetchNetworkTopology, runBaselineSimulation, injectLeak } from './api';
+import { fetchNetworkTopology, runBaselineSimulation, injectLeak, detectLeak } from './api';
 import { NetworkMap } from './components/NetworkMap';
 import { PressureChart } from './components/PressureChart';
 import { LeakControlPanel } from './components/LeakControlPanel';
@@ -22,6 +23,7 @@ export const App: React.FC = () => {
   const [topology, setTopology] = useState<NetworkTopology | null>(null);
   const [baselineResults, setBaselineResults] = useState<SimulationResults | null>(null);
   const [currentResults, setCurrentResults] = useState<SimulationResults | null>(null);
+  const [liveMLPrediction, setLiveMLPrediction] = useState<MLPrediction | null>(null);
 
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
   const [selectedLink, setSelectedLink] = useState<NetworkLink | null>(null);
@@ -47,6 +49,9 @@ export const App: React.FC = () => {
         const sim = await runBaselineSimulation();
         setBaselineResults(sim);
         setCurrentResults(sim);
+        if (sim.ai_detection) {
+          setLiveMLPrediction(sim.ai_detection);
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to connect to backend.');
       } finally {
@@ -56,40 +61,59 @@ export const App: React.FC = () => {
     initData();
   }, []);
 
-  // Compute AI Alert state based on simulation results (Rule-based Ensemble V1)
+  // Update ML inference dynamically when currentTimestep or currentResults change
+  useEffect(() => {
+    if (!currentResults || !baselineResults) return;
+
+    const junctions = ['10', '11', '12', '13', '21', '22', '23', '31', '32'];
+    const currentP: Record<string, number> = {};
+    const baselineP: Record<string, number> = {};
+
+    junctions.forEach((j) => {
+      currentP[j] = currentResults.pressures[j]?.[currentTimestep] ?? 80.0;
+      baselineP[j] = baselineResults.pressures[j]?.[currentTimestep] ?? 80.0;
+    });
+
+    detectLeak(currentP, baselineP)
+      .then((pred) => setLiveMLPrediction(pred))
+      .catch((e) => console.warn('Real-time ML inference warning:', e));
+  }, [currentTimestep, currentResults, baselineResults]);
+
+  // Format AI Alert from Scikit-learn Prediction
   const aiAlert = useMemo<AIAlert>(() => {
-    if (!leakNodeId || !baselineResults || !currentResults) {
+    if (!liveMLPrediction || !liveMLPrediction.is_leak) {
       return {
         isLeakDetected: false,
-        probability: 0.02,
+        probability: liveMLPrediction ? liveMLPrediction.leak_probability : 0.02,
         severity: 'NORMAL',
         detectedNode: null,
-        timestamp: '12:00:00',
+        timestamp: `${currentTimestep.toString().padStart(2, '0')}:00:00`,
         pressureDrop: 0,
-        message: 'Normal hydraulic equilibrium maintained. All node pressures within ±1.5% of baseline envelope.',
+        message: 'Hydraulic equilibrium nominal. All sensor pressures within normal operational baseline.',
+        modelType: liveMLPrediction?.model_type,
+        modelAccuracy: liveMLPrediction?.model_accuracy,
+        topSensors: [],
       };
     }
 
-    const baselineP = baselineResults.pressures[leakNodeId]?.[currentTimestep] || 0;
-    const currentP = currentResults.pressures[leakNodeId]?.[currentTimestep] || 0;
-    const drop = baselineP - currentP;
-
-    // Rule-based diagnostic logic
-    const prob = drop > 25 ? 0.94 : drop > 10 ? 0.82 : 0.65;
-    const severity = drop > 20 ? 'CRITICAL' : drop > 10 ? 'WARNING' : 'NORMAL';
+    const drop = liveMLPrediction.max_pressure_drop;
+    const node = liveMLPrediction.localized_node;
 
     return {
       isLeakDetected: true,
-      probability: prob,
-      severity,
-      detectedNode: leakNodeId,
-      timestamp: `${currentTimestep}:00:00`,
+      probability: liveMLPrediction.leak_probability,
+      severity: liveMLPrediction.severity,
+      detectedNode: node,
+      timestamp: `${currentTimestep.toString().padStart(2, '0')}:00:00`,
       pressureDrop: drop,
-      message: `Critical pressure anomaly detected at Junction ${leakNodeId}. Pressure dropped by ${drop.toFixed(
+      message: `Scikit-learn Random Forest detected an active pipe breach localized at Junction ${node}. Max observed pressure drop is ${drop.toFixed(
         1
-      )} m (${((drop / (baselineP || 1)) * 100).toFixed(0)}% decrease) with localized flow divergence.`,
+      )} m with ${((liveMLPrediction.confidence || 0.9) * 100).toFixed(0)}% model certainty.`,
+      modelType: liveMLPrediction.model_type,
+      modelAccuracy: liveMLPrediction.model_accuracy,
+      topSensors: liveMLPrediction.top_affected_nodes,
     };
-  }, [leakNodeId, baselineResults, currentResults, currentTimestep]);
+  }, [liveMLPrediction, currentTimestep]);
 
   // Handler: Inject Leak
   const handleInjectLeak = async (nodeId: string, leakArea: number) => {
@@ -104,6 +128,9 @@ export const App: React.FC = () => {
 
       const sim = await injectLeak(nodeId, leakArea);
       setCurrentResults(sim);
+      if (sim.ai_detection) {
+        setLiveMLPrediction(sim.ai_detection);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to run leak simulation.');
     } finally {
@@ -150,7 +177,7 @@ export const App: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-slate-400 m-0">
-              AI-Driven Water Distribution Twin • WNTR + EPANET + GPT
+              AI-Driven Water Distribution Twin • WNTR + EPANET + Scikit-Learn
             </p>
           </div>
         </div>
@@ -251,9 +278,7 @@ export const App: React.FC = () => {
             alert={aiAlert}
             onAskGPT={() => {
               alert(
-                `Phase 3 Preview: Calling GPT with:\nJunction: J${leakNodeId}\nPressure Drop: ${aiAlert.pressureDrop.toFixed(
-                  1
-                )} m\nProbability: ${(aiAlert.probability * 100).toFixed(0)}%`
+                `Phase 4 Preview: Passing ML Telemetry to GPT:\n• Localized Node: Junction ${aiAlert.detectedNode}\n• ML Probability: ${(aiAlert.probability * 100).toFixed(1)}%\n• Max Pressure Drop: ${aiAlert.pressureDrop.toFixed(1)} m\n• Top Affected Sensors: ${aiAlert.topSensors?.map(s => `J${s.node} (-${s.drop}m)`).join(', ')}`
               );
             }}
           />

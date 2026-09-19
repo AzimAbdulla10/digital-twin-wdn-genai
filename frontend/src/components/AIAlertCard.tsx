@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AIAlert } from '../types';
-import { ShieldCheck, AlertTriangle, Cpu, ArrowUpRight, Zap } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Cpu, ArrowUpRight, Zap, Target } from 'lucide-react';
 
 interface AIAlertCardProps {
   alert: AIAlert | null;
@@ -18,7 +18,7 @@ export const AIAlertCard: React.FC<AIAlertCardProps> = ({ alert, onAskGPT }) => 
           : 'bg-gradient-to-b from-emerald-950/20 to-slate-950/90 border-emerald-500/30 shadow-emerald-950/20'
       }`}
     >
-      {/* Header */}
+      {/* Header with Model Badge */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div
@@ -32,14 +32,21 @@ export const AIAlertCard: React.FC<AIAlertCardProps> = ({ alert, onAskGPT }) => 
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-100">AI Diagnostic Engine</h3>
-            <p className="text-xs text-slate-400">Scikit-learn Anomaly Detection (V1 Rule Ensemble)</p>
+            <p className="text-[11px] text-slate-400">
+              {alert?.modelType || 'Random Forest Ensemble (100 Trees)'}{' '}
+              {alert?.modelAccuracy ? `• ${(alert.modelAccuracy * 100).toFixed(1)}% Acc` : ''}
+            </p>
           </div>
         </div>
 
         <span
           className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
-            isLeak
+            alert?.severity === 'CRITICAL'
               ? 'bg-red-500/20 text-red-300 border-red-500/40 animate-pulse'
+              : alert?.severity === 'HIGH'
+              ? 'bg-orange-500/20 text-orange-300 border-orange-500/40'
+              : alert?.severity === 'MEDIUM'
+              ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
               : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
           }`}
         >
@@ -61,24 +68,48 @@ export const AIAlertCard: React.FC<AIAlertCardProps> = ({ alert, onAskGPT }) => 
           )}
 
           <div>
-            <div className="text-xs text-slate-400">Leak Probability</div>
+            <div className="text-xs text-slate-400">ML Leak Probability</div>
             <div
               className={`text-2xl font-black font-mono tracking-tight ${
                 isLeak ? 'text-red-400' : 'text-emerald-400'
               }`}
             >
-              {((alert?.probability || 0) * 100).toFixed(0)}%
+              {((alert?.probability || 0) * 100).toFixed(1)}%
             </div>
           </div>
         </div>
 
         <div className="text-right">
-          <div className="text-xs text-slate-400">Localized Node</div>
+          <div className="text-xs text-slate-400 flex items-center justify-end gap-1">
+            <Target className="w-3 h-3 text-cyan-400" /> Localized Node
+          </div>
           <div className="text-base font-mono font-bold text-slate-200">
-            {alert?.detectedNode ? `Junction ${alert.detectedNode}` : 'None (Stable)'}
+            {alert?.detectedNode && alert.detectedNode !== 'Normal'
+              ? `Junction ${alert.detectedNode}`
+              : 'None (Stable)'}
           </div>
         </div>
       </div>
+
+      {/* Top Affected Sensors Breakdown */}
+      {isLeak && alert?.topSensors && alert.topSensors.length > 0 && (
+        <div className="mb-3 p-2.5 rounded-xl bg-slate-900/50 border border-slate-800/60 text-xs">
+          <span className="text-slate-400 block mb-1.5 font-medium text-[11px]">
+            Sensor Anomaly Signatures:
+          </span>
+          <div className="grid grid-cols-3 gap-1.5 font-mono text-[11px]">
+            {alert.topSensors.map((s) => (
+              <div
+                key={s.node}
+                className="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex items-center justify-between"
+              >
+                <span className="text-slate-400">J{s.node}</span>
+                <span className="text-red-400 font-semibold">-{s.drop.toFixed(1)}m</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Message summary */}
       <p className="text-xs text-slate-300 leading-relaxed mb-3">
