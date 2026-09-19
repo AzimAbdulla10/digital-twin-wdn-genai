@@ -53,24 +53,37 @@ export const PressureChart: React.FC<PressureChartProps> = ({
   const deltaPressure = activeCurrent - activeBaseline;
   const isDrop = deltaPressure < -1;
 
+  const isTank = selectedNode.type === 'tank';
+
   return (
     <div className="w-full bg-slate-950/90 rounded-2xl border border-slate-800 p-5 flex flex-col shadow-xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+          <div className={`p-1.5 rounded-lg border ${
+            isTank 
+              ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' 
+              : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+          }`}>
             <Gauge className="w-4 h-4" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-              Pressure Profile: <span className="text-cyan-400 font-mono">Node {selectedNode.id}</span>
+              {isTank ? 'Storage Level:' : 'Pressure Profile:'}{' '}
+              <span className="text-cyan-400 font-mono">
+                {isTank ? `Tank ${selectedNode.id}` : `Node ${selectedNode.id}`}
+              </span>
               {leakNodeId === selectedNode.id && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
                   Leak Injected
                 </span>
               )}
             </h3>
-            <p className="text-xs text-slate-400">24-Hour Pressure Head (m) Hydraulic Response</p>
+            <p className="text-xs text-slate-400">
+              {isTank 
+                ? '24-Hour Tank Storage Level (m) & Buffer Reserve Trajectory'
+                : '24-Hour Pressure Head (m) Hydraulic Response'}
+            </p>
           </div>
         </div>
 
@@ -80,10 +93,10 @@ export const PressureChart: React.FC<PressureChartProps> = ({
             <div className="text-right">
               <span className="text-xs text-slate-400">At Hour {currentTimestep}:00</span>
               <div className="text-sm font-mono font-bold text-slate-200">
-                {activeCurrent.toFixed(1)} m
+                {activeCurrent.toFixed(1)} m {isTank ? `(${((activeCurrent / 45.72) * 100).toFixed(0)}%)` : ''}
               </div>
             </div>
-            {isDrop && (
+            {isDrop && !isTank && (
               <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-mono font-semibold animate-pulse">
                 <TrendingDown className="w-3.5 h-3.5" />
                 {deltaPressure.toFixed(1)} m

@@ -22,6 +22,8 @@ app.add_middleware(
 class LeakRequest(BaseModel):
     node_id: str
     leak_area: Optional[float] = 0.005
+    temperature: Optional[float] = 24.0
+    is_weekend: Optional[int] = 0
 
 class DetectLeakRequest(BaseModel):
     current_pressures: Dict[str, float]
@@ -36,7 +38,7 @@ def root():
         "endpoints": {
             "docs": "/docs",
             "network": "/network",
-            "simulate": "/simulate",
+            "simulate": "/simulate?temp=24.0&is_weekend=0",
             "inject_leak": "/inject-leak [POST]",
             "detect_leak": "/detect-leak [POST]",
             "forecast_demand": "/forecast-demand [GET]"
@@ -60,12 +62,12 @@ def get_network():
         raise HTTPException(status_code=500, detail=f"Failed to load network: {str(e)}")
 
 @app.get("/simulate")
-def get_simulation():
+def get_simulation(temp: Optional[float] = 24.0, is_weekend: Optional[int] = 0):
     """
-    Runs the baseline hydraulic simulation (no leaks) and returns pressures, flows, and AI inference.
+    Runs the baseline hydraulic simulation (no leaks) driven by ML demand forecast at given temperature/day type.
     """
     try:
-        results = simulation.run_hydraulic_simulation()
+        results = simulation.run_hydraulic_simulation(temperature=temp, is_weekend=is_weekend)
         
         # Evaluate baseline with ML model at Hour 12
         p_hour12 = {node: results['pressures'][node][12] for node in results['pressures'] if node in ai.JUNCTIONS}
@@ -78,16 +80,24 @@ def get_simulation():
 @app.post("/inject-leak")
 def inject_leak(request: LeakRequest):
     """
-    Simulates a leak at the given node ID and returns updated pressures, flows, and ML leak detection.
+    Simulates a leak at the given node ID driven by ML demand forecast and returns updated pressures, flows, and ML leak detection.
     """
     try:
+        temp = request.temperature if request.temperature is not None else 24.0
+        weekend = request.is_weekend if request.is_weekend is not None else 0
+
         results = simulation.run_hydraulic_simulation(
             leak_node_id=request.node_id, 
-            leak_area=request.leak_area
+            leak_area=request.leak_area,
+            temperature=temp,
+            is_weekend=weekend
         )
         
-        # Calculate baseline pressures for ML comparison
-        baseline_res = simulation.run_hydraulic_simulation()
+        # Calculate baseline pressures under same weather for ML comparison
+        baseline_res = simulation.run_hydraulic_simulation(
+            temperature=temp,
+            is_weekend=weekend
+        )
         current_p_hour12 = {node: results['pressures'][node][12] for node in results['pressures'] if node in ai.JUNCTIONS}
         baseline_p_hour12 = {node: baseline_res['pressures'][node][12] for node in baseline_res['pressures'] if node in ai.JUNCTIONS}
         

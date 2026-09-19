@@ -53,8 +53,9 @@ def generate_24h_demand_forecast(base_temperature=24.0, is_weekend=0):
     hourly_forecast = []
     
     # Simulate realistic thermal cycle across 24 hours (cooler at night, peak heat at 14:00)
+    records = []
     for h in range(24):
-        temp_h = base_temperature + 6.0 * np.sin((h - 8) * np.pi / 12.0)
+        temp_h = base_temperature + 5.5 * np.sin((h - 8) * np.pi / 12.0)
         
         # Build feature vector
         h_sin = np.sin(2 * np.pi * h / 24.0)
@@ -62,35 +63,41 @@ def generate_24h_demand_forecast(base_temperature=24.0, is_weekend=0):
         dow_sin = np.sin(2 * np.pi * (5 if is_weekend else 2) / 7.0)
         dow_cos = np.cos(2 * np.pi * (5 if is_weekend else 2) / 7.0)
         
-        # Approximate lag assumptions based on typical daily profiles
-        diurnal_mult = 1.0 + 0.38 * np.sin((h - 4) * np.pi / 12.0) if h >= 6 and h <= 22 else 0.55
-        approx_lag = 320.0 * diurnal_mult
+        # Diurnal pattern multiplier for synthetic lag estimation
+        diurnal_mult = 1.0 + 0.38 * np.sin((h - 5) * np.pi / 12.0) if 6 <= h <= 22 else 0.52
+        temp_factor = 1.0 + (base_temperature - 20.0) * 0.015 # +1.5% demand per degree above 20C
+        approx_lag = 310.0 * diurnal_mult * max(0.7, temp_factor)
         
-        feat_dict = {
+        records.append({
+            'hour_int': h,
             'hour_sin': h_sin,
             'hour_cos': h_cos,
             'dow_sin': dow_sin,
             'dow_cos': dow_cos,
             'is_weekend': is_weekend,
-            'month': 6,
-            'temperature_c': temp_h,
+            'month': 7,
+            'temperature_c': round(temp_h, 1),
             'rainfall_mm': 0.0,
             'is_raining': 0,
-            'humidity_pct': 55.0,
+            'humidity_pct': max(30.0, 75.0 - (temp_h - 15.0) * 1.5),
             'lag_1h': approx_lag * 0.98,
             'lag_2h': approx_lag * 0.95,
             'lag_24h': approx_lag,
             'lag_48h': approx_lag,
             'lag_168h': approx_lag,
             'rolling_mean_6h': approx_lag,
-            'rolling_mean_24h': 300.0,
+            'rolling_mean_24h': 300.0 * temp_factor,
             'rolling_std_24h': 65.0,
-        }
+        })
         
-        X_h = np.array([[feat_dict[c] for c in feature_cols]])
-        raw_pred_dma = float(model.predict(X_h)[0])
+    df_features = pd.DataFrame(records)
+    raw_preds = model.predict(df_features[feature_cols])
+    
+    for i, r in enumerate(records):
+        h = r['hour_int']
+        raw_pred_dma = float(raw_preds[i])
         
-        # Scaled for Net1 Digital Twin
+        # Scaled for Net1 Digital Twin (~66 L/s nominal baseline)
         pred_net1 = float(max(15.0, raw_pred_dma * scale_factor))
         upper_net1 = float(pred_net1 + (residual_std * scale_factor * 1.96))
         lower_net1 = float(max(10.0, pred_net1 - (residual_std * scale_factor * 1.96)))
@@ -104,7 +111,7 @@ def generate_24h_demand_forecast(base_temperature=24.0, is_weekend=0):
             'forecast_demand_lps': round(pred_net1, 2),
             'upper_bound_lps': round(upper_net1, 2),
             'lower_bound_lps': round(lower_net1, 2),
-            'temperature_c': round(temp_h, 1),
+            'temperature_c': r['temperature_c'],
             'is_peak': bool(h in [7, 8, 9, 18, 19, 20]),
             'junction_demands': junction_demands
         })

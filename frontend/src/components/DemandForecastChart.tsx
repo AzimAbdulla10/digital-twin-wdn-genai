@@ -16,12 +16,18 @@ import { TrendingUp, Thermometer, AlertCircle, BarChart3, Sun, Moon, Loader2 } f
 
 interface DemandForecastChartProps {
   currentTimestep: number;
+  temperature?: number;
+  isWeekend?: number;
+  onScenarioChange?: (temp: number, weekend: number) => void;
 }
 
-export const DemandForecastChart: React.FC<DemandForecastChartProps> = ({ currentTimestep }) => {
+export const DemandForecastChart: React.FC<DemandForecastChartProps> = ({
+  currentTimestep,
+  temperature = 22.0,
+  isWeekend = 0,
+  onScenarioChange,
+}) => {
   const [forecastData, setForecastData] = useState<DemandForecastResponse | null>(null);
-  const [temperature, setTemperature] = useState<number>(26.0);
-  const [isWeekend, setIsWeekend] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,10 +88,10 @@ export const DemandForecastChart: React.FC<DemandForecastChartProps> = ({ curren
             <input
               type="range"
               min="10"
-              max="40"
+              max="42"
               step="1"
               value={temperature}
-              onChange={(e) => setTemperature(parseFloat(e.target.value))}
+              onChange={(e) => onScenarioChange?.(parseFloat(e.target.value), isWeekend)}
               className="w-16 accent-amber-400 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
             />
             <span className="font-mono text-amber-300 w-8">{temperature}°C</span>
@@ -93,7 +99,7 @@ export const DemandForecastChart: React.FC<DemandForecastChartProps> = ({ curren
 
           {/* Weekend Toggle */}
           <button
-            onClick={() => setIsWeekend(isWeekend === 1 ? 0 : 1)}
+            onClick={() => onScenarioChange?.(temperature, isWeekend === 1 ? 0 : 1)}
             className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors ${
               isWeekend === 1
                 ? 'bg-purple-500/20 border-purple-500/40 text-purple-200'

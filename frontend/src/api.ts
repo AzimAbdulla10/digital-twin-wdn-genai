@@ -10,15 +10,20 @@ export async function fetchNetworkTopology(): Promise<NetworkTopology> {
   return res.json();
 }
 
-export async function runBaselineSimulation(): Promise<SimulationResults> {
-  const res = await fetch(`${API_BASE_URL}/simulate`);
+export async function runBaselineSimulation(temp: number = 24.0, isWeekend: number = 0): Promise<SimulationResults> {
+  const res = await fetch(`${API_BASE_URL}/simulate?temp=${temp}&is_weekend=${isWeekend}`);
   if (!res.ok) {
     throw new Error(`Failed to run baseline simulation: ${res.statusText}`);
   }
   return res.json();
 }
 
-export async function injectLeak(nodeId: string, leakArea: number = 0.005): Promise<SimulationResults> {
+export async function injectLeak(
+  nodeId: string,
+  leakArea: number = 0.005,
+  temp: number = 24.0,
+  isWeekend: number = 0
+): Promise<SimulationResults> {
   const res = await fetch(`${API_BASE_URL}/inject-leak`, {
     method: 'POST',
     headers: {
@@ -27,6 +32,8 @@ export async function injectLeak(nodeId: string, leakArea: number = 0.005): Prom
     body: JSON.stringify({
       node_id: nodeId,
       leak_area: leakArea,
+      temperature: temp,
+      is_weekend: isWeekend,
     }),
   });
   if (!res.ok) {

@@ -13,6 +13,7 @@ import { PressureChart } from './components/PressureChart';
 import { DemandForecastChart } from './components/DemandForecastChart';
 import { LeakControlPanel } from './components/LeakControlPanel';
 import { AIAlertCard } from './components/AIAlertCard';
+import { ScenarioControlBar } from './components/ScenarioControlBar';
 import {
   Droplet,
   RefreshCw,
@@ -34,6 +35,11 @@ export const App: React.FC = () => {
   const [currentTimestep, setCurrentTimestep] = useState<number>(12); // Hour 12:00 noon
   const [activeTab, setActiveTab] = useState<'pressure' | 'demand'>('pressure');
 
+  // Scenario and Environmental States
+  const [temperature, setTemperature] = useState<number>(22.0);
+  const [isWeekend, setIsWeekend] = useState<number>(0);
+  const [activePreset, setActivePreset] = useState<string | null>('nominal');
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +56,7 @@ export const App: React.FC = () => {
         const defaultNode = net.nodes.find((n) => n.id === '11') || net.nodes[0];
         setSelectedNode(defaultNode);
 
-        const sim = await runBaselineSimulation();
+        const sim = await runBaselineSimulation(22.0, 0);
         setBaselineResults(sim);
         setCurrentResults(sim);
         if (sim.ai_detection) {
@@ -119,6 +125,35 @@ export const App: React.FC = () => {
     };
   }, [liveMLPrediction, currentTimestep]);
 
+  // Handler: Change Scenario / Weather Conditions
+  const handleScenarioChange = async (newTemp: number, newWeekend: number, presetId?: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      setTemperature(newTemp);
+      setIsWeekend(newWeekend);
+      if (presetId) setActivePreset(presetId);
+
+      // Run baseline under new weather condition
+      const baselineSim = await runBaselineSimulation(newTemp, newWeekend);
+      setBaselineResults(baselineSim);
+
+      if (leakNodeId) {
+        // If leak active, re-simulate leak under new weather condition
+        const leakSim = await injectLeak(leakNodeId, 0.005, newTemp, newWeekend);
+        setCurrentResults(leakSim);
+        if (leakSim.ai_detection) setLiveMLPrediction(leakSim.ai_detection);
+      } else {
+        setCurrentResults(baselineSim);
+        if (baselineSim.ai_detection) setLiveMLPrediction(baselineSim.ai_detection);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to update scenario.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handler: Inject Leak
   const handleInjectLeak = async (nodeId: string, leakArea: number) => {
     try {
@@ -130,7 +165,7 @@ export const App: React.FC = () => {
       const node = topology?.nodes.find((n) => n.id === nodeId);
       if (node) setSelectedNode(node);
 
-      const sim = await injectLeak(nodeId, leakArea);
+      const sim = await injectLeak(nodeId, leakArea, temperature, isWeekend);
       setCurrentResults(sim);
       if (sim.ai_detection) {
         setLiveMLPrediction(sim.ai_detection);
@@ -148,12 +183,11 @@ export const App: React.FC = () => {
       setIsLoading(true);
       setError(null);
       setLeakNodeId(null);
-      if (baselineResults) {
-        setCurrentResults(baselineResults);
-      } else {
-        const sim = await runBaselineSimulation();
-        setBaselineResults(sim);
-        setCurrentResults(sim);
+      const sim = await runBaselineSimulation(temperature, isWeekend);
+      setBaselineResults(sim);
+      setCurrentResults(sim);
+      if (sim.ai_detection) {
+        setLiveMLPrediction(sim.ai_detection);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to reset.');
@@ -225,6 +259,16 @@ export const App: React.FC = () => {
           </button>
         </div>
       </header>
+
+      {/* Predictive Scenario Control Toolbar */}
+      <ScenarioControlBar
+        temperature={temperature}
+        isWeekend={isWeekend}
+        onScenarioChange={handleScenarioChange}
+        activePreset={activePreset}
+        riskAssessment={currentResults?.risk_assessment}
+        isLoading={isLoading}
+      />
 
       {/* Main Content Area */}
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1700px] w-full mx-auto">
@@ -302,7 +346,12 @@ export const App: React.FC = () => {
                 currentTimestep={currentTimestep}
               />
             ) : (
-              <DemandForecastChart currentTimestep={currentTimestep} />
+              <DemandForecastChart
+                currentTimestep={currentTimestep}
+                temperature={temperature}
+                isWeekend={isWeekend}
+                onScenarioChange={handleScenarioChange}
+              />
             )}
           </div>
         </div>
@@ -312,6 +361,8 @@ export const App: React.FC = () => {
           {/* AI Alert Card */}
           <AIAlertCard
             alert={aiAlert}
+            disambiguation={currentResults?.disambiguation}
+            riskAssessment={currentResults?.risk_assessment}
             onAskGPT={() => {
               alert(
                 `Phase 4 Preview: Passing ML Telemetry to GPT:\n• Localized Node: Junction ${aiAlert.detectedNode}\n• ML Probability: ${(aiAlert.probability * 100).toFixed(1)}%\n• Max Pressure Drop: ${aiAlert.pressureDrop.toFixed(1)} m\n• Top Affected Sensors: ${aiAlert.topSensors?.map(s => `J${s.node} (-${s.drop}m)`).join(', ')}`
