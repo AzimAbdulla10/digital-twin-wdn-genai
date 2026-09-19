@@ -292,8 +292,8 @@ export const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Scenario Control Toolbar (Shown on Twin and Forecast views) */}
-      {currentView !== 'genai' && (
+      {/* Scenario Control Toolbar (Shown strictly on Demand Forecasting view) */}
+      {currentView === 'forecast' && (
         <ScenarioControlBar
           temperature={temperature}
           isWeekend={isWeekend}
@@ -345,7 +345,6 @@ export const App: React.FC = () => {
             currentTimestep={currentTimestep}
             temperature={temperature}
             isWeekend={isWeekend}
-            onScenarioChange={handleScenarioChange}
             riskAssessment={currentResults?.risk_assessment}
           />
         )}

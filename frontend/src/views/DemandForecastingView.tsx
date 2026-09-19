@@ -29,7 +29,6 @@ interface DemandForecastingViewProps {
   currentTimestep: number;
   temperature: number;
   isWeekend: number;
-  onScenarioChange: (temp: number, weekend: number, presetId?: string) => void;
   riskAssessment?: RiskAssessment;
 }
 
@@ -37,7 +36,6 @@ export const DemandForecastingView: React.FC<DemandForecastingViewProps> = ({
   currentTimestep,
   temperature,
   isWeekend,
-  onScenarioChange,
   riskAssessment,
 }) => {
   const [forecastData, setForecastData] = useState<DemandForecastResponse | null>(null);
@@ -161,36 +159,17 @@ export const DemandForecastingView: React.FC<DemandForecastingViewProps> = ({
             </div>
           </div>
 
-          {/* Interactive Scenario Sliders */}
-          <div className="flex items-center gap-3 bg-slate-900/90 px-3.5 py-2 rounded-xl border border-slate-800 text-xs">
-            <div className="flex items-center gap-1.5">
-              <Thermometer className="w-4 h-4 text-amber-400" />
-              <span className="text-slate-400">Temperature:</span>
-              <input
-                type="range"
-                min="10"
-                max="42"
-                step="1"
-                value={temperature}
-                onChange={(e) => onScenarioChange(parseFloat(e.target.value), isWeekend, 'custom')}
-                className="w-24 accent-amber-400 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
-              />
-              <span className="font-mono font-bold text-amber-300 w-10">{temperature}°C</span>
+          {/* Active Scenario Condition Display */}
+          <div className="flex items-center gap-3 bg-slate-900/90 px-3.5 py-1.5 rounded-xl border border-slate-800 text-xs">
+            <div className="flex items-center gap-1.5 text-amber-300">
+              <Thermometer className="w-3.5 h-3.5 text-amber-400" />
+              <span className="font-mono font-semibold">{temperature}°C Ambient</span>
             </div>
-
             <span className="text-slate-700">|</span>
-
-            <button
-              onClick={() => onScenarioChange(temperature, isWeekend === 1 ? 0 : 1, 'custom')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-                isWeekend === 1
-                  ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                  : 'bg-slate-800 border-slate-700 text-slate-300'
-              }`}
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{isWeekend === 1 ? 'Weekend Mode' : 'Weekday Mode'}</span>
-            </button>
+            <div className="flex items-center gap-1.5 text-purple-300">
+              <Calendar className="w-3.5 h-3.5 text-purple-400" />
+              <span>{isWeekend === 1 ? 'Weekend Pattern' : 'Weekday Pattern'}</span>
+            </div>
           </div>
         </div>
 
