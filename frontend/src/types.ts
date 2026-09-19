@@ -61,3 +61,33 @@ export interface AIAlert {
   modelAccuracy?: number;
   topSensors?: TopAffectedNode[];
 }
+
+export interface HourlyForecastPoint {
+  hour: string;
+  hour_int: number;
+  forecast_demand_lps: number;
+  upper_bound_lps: number;
+  lower_bound_lps: number;
+  temperature_c: number;
+  is_peak: boolean;
+  junction_demands: Record<string, number>;
+}
+
+export interface DemandForecastResponse {
+  status: string;
+  dataset_source: string;
+  model_type: string;
+  model_r2_score: number;
+  model_mae_lps: number;
+  peak_demand: {
+    hour: string;
+    value_lps: number;
+    warning: string;
+  };
+  minimum_demand: {
+    hour: string;
+    value_lps: number;
+    status: string;
+  };
+  forecast_24h: HourlyForecastPoint[];
+}

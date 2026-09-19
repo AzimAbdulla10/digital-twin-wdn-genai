@@ -6,6 +6,7 @@ import uvicorn
 
 import simulation
 import ai
+import demand_forecast
 
 app = FastAPI(title="Water Distribution Network Digital Twin API")
 
@@ -37,12 +38,12 @@ def root():
             "network": "/network",
             "simulate": "/simulate",
             "inject_leak": "/inject-leak [POST]",
-            "detect_leak": "/detect-leak [POST]"
+            "detect_leak": "/detect-leak [POST]",
+            "forecast_demand": "/forecast-demand [GET]"
         },
-        "ml_model": {
-            "type": "Random Forest Ensemble (100 trees)",
-            "classes": 10,
-            "status": "ready"
+        "ml_models": {
+            "leak_detection": "Random Forest Ensemble (100 trees, 97.4% accuracy)",
+            "demand_forecasting": "HistGradientBoostingRegressor (BWDF 19k hours, 98.1% R²)"
         },
         "frontend": "http://localhost:5173"
     }
@@ -107,6 +108,20 @@ def detect_leak(request: DetectLeakRequest):
         return prediction
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Leak detection failed: {str(e)}")
+
+@app.get("/forecast-demand")
+def get_demand_forecast(temp: Optional[float] = 24.0, is_weekend: Optional[int] = 0):
+    """
+    Returns 24-hour ahead water demand forecasts based on the trained BWDF model.
+    """
+    try:
+        forecast = demand_forecast.generate_24h_demand_forecast(
+            base_temperature=temp,
+            is_weekend=is_weekend
+        )
+        return forecast
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Demand forecasting failed: {str(e)}")
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

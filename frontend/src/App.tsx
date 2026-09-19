@@ -10,6 +10,7 @@ import type {
 import { fetchNetworkTopology, runBaselineSimulation, injectLeak, detectLeak } from './api';
 import { NetworkMap } from './components/NetworkMap';
 import { PressureChart } from './components/PressureChart';
+import { DemandForecastChart } from './components/DemandForecastChart';
 import { LeakControlPanel } from './components/LeakControlPanel';
 import { AIAlertCard } from './components/AIAlertCard';
 import {
@@ -17,6 +18,8 @@ import {
   RefreshCw,
   Clock,
   Layers,
+  Activity,
+  TrendingUp,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -29,6 +32,7 @@ export const App: React.FC = () => {
   const [selectedLink, setSelectedLink] = useState<NetworkLink | null>(null);
   const [leakNodeId, setLeakNodeId] = useState<string | null>(null);
   const [currentTimestep, setCurrentTimestep] = useState<number>(12); // Hour 12:00 noon
+  const [activeTab, setActiveTab] = useState<'pressure' | 'demand'>('pressure');
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -259,15 +263,47 @@ export const App: React.FC = () => {
             />
           </div>
 
-          {/* Bottom: Recharts Pressure Time-Series */}
-          <div>
-            <PressureChart
-              selectedNode={selectedNode}
-              baselineResults={baselineResults}
-              currentResults={currentResults}
-              leakNodeId={leakNodeId}
-              currentTimestep={currentTimestep}
-            />
+          {/* Bottom: Analytics Tabs & Charts */}
+          <div className="flex flex-col gap-3">
+            {/* Chart Mode Switcher */}
+            <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800/80 p-1.5 rounded-xl w-fit">
+              <button
+                onClick={() => setActiveTab('pressure')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  activeTab === 'pressure'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                }`}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                <span>Hydraulic Pressure Profile</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('demand')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  activeTab === 'demand'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                }`}
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>24h Demand Forecast (BWDF)</span>
+              </button>
+            </div>
+
+            {/* Active Chart View */}
+            {activeTab === 'pressure' ? (
+              <PressureChart
+                selectedNode={selectedNode}
+                baselineResults={baselineResults}
+                currentResults={currentResults}
+                leakNodeId={leakNodeId}
+                currentTimestep={currentTimestep}
+              />
+            ) : (
+              <DemandForecastChart currentTimestep={currentTimestep} />
+            )}
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import type { NetworkTopology, SimulationResults, MLPrediction } from './types';
+import type { NetworkTopology, SimulationResults, MLPrediction, DemandForecastResponse } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -51,6 +51,14 @@ export async function detectLeak(
   });
   if (!res.ok) {
     throw new Error(`Failed to run ML detection: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function fetchDemandForecast(temp: number = 24.0, isWeekend: number = 0): Promise<DemandForecastResponse> {
+  const res = await fetch(`${API_BASE_URL}/forecast-demand?temp=${temp}&is_weekend=${isWeekend}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch demand forecast: ${res.statusText}`);
   }
   return res.json();
 }
