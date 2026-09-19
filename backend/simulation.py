@@ -170,6 +170,7 @@ def run_hydraulic_simulation(leak_node_id=None, leak_area=0.005, temperature=24.
             "reason": f"Observed network inflow exceeds ML demand forecast envelope by +{leak_flow_avg:.1f} L/s with abnormal localized pressure drop. Confirmed physical pipe breach, not a consumer demand surge.",
             "action_required": f"Isolate Pipe connecting to Junction J{leak_node_id} and dispatch repair crew."
         }
+    elif temperature >= 30.0:
         peak_val = forecast_bundle['peak_demand']['value_lps']
         surge_pct = max(10, round(((peak_val - 45.0) / 45.0) * 100))
         disambiguation = {
