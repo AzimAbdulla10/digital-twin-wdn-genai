@@ -34,10 +34,10 @@ interface ChatMessage {
 }
 
 const QUICK_PROMPTS = [
-  '🚨 Analyze current network anomaly and recommend emergency crew actions',
-  '🔍 Explain why Junction pressures dropped during this hour',
-  '☀️ Evaluate tomorrow\'s 36°C heatwave pumping schedule for Tank 2',
-  '🔧 Formulate valve throttling plan to isolate leak without cutting residential supply',
+  'Analyze current network anomaly and recommend emergency crew actions',
+  'Explain why Junction pressures dropped during this hour',
+  'Evaluate tomorrow\'s 36°C heatwave pumping schedule for Tank 2',
+  'Formulate valve throttling plan to isolate leak without cutting residential supply',
 ];
 
 export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
@@ -120,7 +120,7 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
           id: `ai-${Date.now()}`,
           sender: 'assistant',
           timestamp: `${currentTimestep.toString().padStart(2, '0')}:00:02`,
-          content: `### ⚠️ Assistant Communication Notice\n\nCould not connect to the GenAI decision support service. Please ensure the backend is running on port 8000.`,
+          content: `### Assistant Communication Notice\n\nCould not connect to the GenAI decision support service. Please ensure the backend is running on port 8000.`,
         },
       ]);
     } finally {

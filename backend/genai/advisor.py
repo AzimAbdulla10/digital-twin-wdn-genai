@@ -65,7 +65,7 @@ def _build_telemetry_prompt(
 - **Simulation Time:** Hour {time_str} ({day_type} Schedule)
 - **Ambient Conditions:** {temperature}°C ambient temperature
 - **Random Forest Leak Diagnostic:**
-  - Status: {'🔴 ACTIVE PIPE RUPTURE DETECTED' if is_leak else '🟢 NOMINAL EQUILIBRIUM'}
+  - Status: {'[CRITICAL] ACTIVE PIPE RUPTURE DETECTED' if is_leak else '[NOMINAL] EQUILIBRIUM'}
   - Localized Node: Junction J{detected_node} if is_leak else 'None (All Nominal)'
   - ML Confidence: {prob:.1f}% Certainty
   - Max Observed Pressure Deficit: -{drop:.1f} meters
@@ -108,7 +108,7 @@ def _generate_offline_expert_response(
             f"3. Storage Buffering: Switch Tank 2 to direct discharge mode to cushion downstream localized pressure drop.",
             f"4. Crew Dispatch: Issue priority Level-1 emergency work order to Sector J{node} field crew for acoustic sounding and pipe clamp repair."
         ]
-        response_text = f"""### 🚨 Hydraulic Incident Report: Confirmed Pipe Breach at Junction J{node}
+        response_text = f"""### Hydraulic Incident Report: Confirmed Pipe Breach at Junction J{node}
 
 Our dual-model diagnostic pipeline has evaluated spatial pressure telemetry and confirmed a physical pipe rupture rather than a consumer demand surge.
 
@@ -136,7 +136,7 @@ Extended-period simulation confirms that isolating Pipe {node} within 30 minutes
             "2. Increase Pump 9 head to maintain minimum 25m residual pressure at high-elevation nodes (J11, J32).",
             "3. Issue automated voluntary municipal water conservation advisory for peak hours (06:00 - 09:00, 18:00 - 20:00)."
         ]
-        response_text = f"""### ☀️ Thermal Demand Surge Advisory ({temperature:.1f}°C Heatwave)
+        response_text = f"""### Thermal Demand Surge Advisory ({temperature:.1f}°C Heatwave)
 
 The digital twin has disambiguated elevated network inflow as a **legitimate consumer demand surge** induced by high ambient temperature ({temperature:.1f}°C), not a structural pipe rupture.
 
@@ -158,7 +158,7 @@ The digital twin has disambiguated elevated network inflow as a **legitimate con
             "2. Continue passive monitoring of high-frequency pressure sensor telemetry.",
             "3. Nominal baseline operations verified."
         ]
-        response_text = f"""### 🟢 Network Operational Status: Nominal Equilibrium
+        response_text = f"""### Network Operational Status: Nominal Equilibrium
 
 The digital twin confirms that the water distribution network is operating in **optimal hydraulic equilibrium** at Hour {time_str}.
 
