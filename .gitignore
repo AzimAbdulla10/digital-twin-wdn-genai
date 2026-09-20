@@ -31,6 +31,8 @@ share/python-wheels/
 # Environment variables & secrets
 .env
 .env.*
+!.env.example
+*.db
 
 # Logs
 *.log

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { SimulationResults, AIAlert } from '../types';
+import { askAIAssistant } from '../api';
 import {
   Bot,
   Sparkles,
@@ -23,6 +24,7 @@ interface ChatMessage {
   sender: 'user' | 'assistant';
   timestamp: string;
   content: string;
+  modelUsed?: string;
   structuredAdvisory?: {
     severity: 'NORMAL' | 'ELEVATED' | 'CRITICAL';
     rootCause: string;
@@ -51,6 +53,7 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
       id: 'welcome',
       sender: 'assistant',
       timestamp: '12:00:00',
+      modelUsed: 'Google Gemini 2.5 Flash / Expert Fallback',
       content:
         'HydroTwin GenAI Assistant online. I am continuously monitoring WNTR physical simulations, Random Forest leak alerts, and BWDF demand forecasts. How can I assist you with network operations today?',
     },
@@ -58,7 +61,7 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
   const [inputQuery, setInputQuery] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleSendPrompt = (promptText: string) => {
+  const handleSendPrompt = async (promptText: string) => {
     if (!promptText.trim()) return;
 
     const userMsg: ChatMessage = {
@@ -72,74 +75,57 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
     setInputQuery('');
     setIsGenerating(true);
 
-    // Dynamic AI response generation based on digital twin live telemetry
-    setTimeout(() => {
-      let aiMsg: ChatMessage;
+    try {
+      // Extract current junction pressures for telemetry injection
+      const currentP: Record<string, number> = {};
+      const junctions = ['10', '11', '12', '13', '21', '22', '23', '31', '32'];
+      junctions.forEach((j) => {
+        currentP[j] = currentResults?.pressures[j]?.[currentTimestep] ?? 80.0;
+      });
 
-      if (leakNodeId || aiAlert.isLeakDetected) {
-        const node = leakNodeId || aiAlert.detectedNode || '12';
-        const drop = aiAlert.pressureDrop.toFixed(1);
-        const prob = (aiAlert.probability * 100).toFixed(1);
+      const response = await askAIAssistant({
+        prompt: promptText,
+        current_timestep: currentTimestep,
+        temperature: temperature,
+        is_weekend: isWeekend,
+        leak_node_id: leakNodeId,
+        current_pressures: currentP,
+        ai_alert: aiAlert,
+        risk_assessment: currentResults?.risk_assessment,
+        disambiguation: currentResults?.disambiguation,
+      });
 
-        aiMsg = {
-          id: `ai-${Date.now()}`,
-          sender: 'assistant',
-          timestamp: `${currentTimestep.toString().padStart(2, '0')}:00:05`,
-          content: `### 🚨 Hydraulic Incident Report: Confirmed Pipe Breach at Junction J${node}\n\nOur dual-model diagnostic pipeline has evaluated spatial pressure telemetry and confirmed a physical pipe rupture rather than a consumer demand surge.`,
-          structuredAdvisory: {
-            severity: 'CRITICAL',
-            rootCause: `Physical rupture at Junction J${node} causing a localized pressure deficit of -${drop}m (${prob}% ML model certainty).`,
-            steps: [
-              `1. Immediately throttle Valve on Pipe connecting upstream to Junction J${node}.`,
-              `2. Boost Pump 9 operational speed by +15% to maintain minimum 20m legal pressure head at peripheral nodes (J31, J32).`,
-              `3. Dispatch emergency utility field crew to Sector J${node} GPS coordinates.`,
-              `4. Switch Tank 2 to direct discharge mode to cushion downstream pressure loss.`,
-            ],
-            advisoryText:
-              'Continuous PDD simulation confirms that isolating Pipe 11 will prevent Tank 2 from dropping below the 25m emergency reserve threshold.',
-          },
-        };
-      } else if (temperature >= 32.0) {
-        aiMsg = {
-          id: `ai-${Date.now()}`,
-          sender: 'assistant',
-          timestamp: `${currentTimestep.toString().padStart(2, '0')}:00:05`,
-          content: `### ☀️ Thermal Operational Advisory: ${temperature}°C Summer Heatwave\n\nThe BWDF demand model predicts a +28% municipal consumption peak today. Physical pressures remain within legal parameters, but Tank 2 storage requires active buffer management.`,
-          structuredAdvisory: {
-            severity: 'ELEVATED',
-            rootCause: `Elevated consumer demand (+28% peak draw at ${currentResults?.forecast?.peak_demand.hour || '08:00'}) driven by ${temperature}°C temperature.`,
-            steps: [
-              `1. Pre-fill Tank 2 to 95% capacity during the low-cost off-peak night window (00:00 - 05:00).`,
-              `2. Maintain continuous pump delivery at 70 L/s during the afternoon heat peak (12:00 - 16:00).`,
-              `3. Monitor Junction J31 for localized low-pressure head during morning commute hours.`,
-            ],
-            advisoryText:
-              'No physical pipe leak detected. Disambiguation engine confirms flow increase is 100% legitimate consumer demand.',
-          },
-        };
-      } else {
-        aiMsg = {
-          id: `ai-${Date.now()}`,
-          sender: 'assistant',
-          timestamp: `${currentTimestep.toString().padStart(2, '0')}:00:05`,
-          content: `### 🟢 Network Operational Status: Nominal Baseline\n\nAll 9 junction pressure sensors and 12 pipeline segments are operating in hydraulic equilibrium with the ML demand forecast.`,
-          structuredAdvisory: {
-            severity: 'NORMAL',
-            rootCause: 'Normal diurnal consumption pattern under standard weather conditions.',
-            steps: [
-              '1. Maintain baseline pump speed curve.',
-              '2. Keep automated leak detection scan cycle active every 60 seconds.',
-              '3. Routine chlorine residual levels nominal across all distribution nodes.',
-            ],
-            advisoryText:
-              'Network is operating at optimal energy efficiency with 0 legal pressure deficit violations.',
-          },
-        };
-      }
+      const aiMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        sender: 'assistant',
+        timestamp: `${currentTimestep.toString().padStart(2, '0')}:00:02`,
+        content: response.response_text,
+        modelUsed: response.model_used,
+        structuredAdvisory: response.structured_advisory
+          ? {
+              severity: response.structured_advisory.severity,
+              rootCause: response.structured_advisory.rootCause,
+              steps: response.structured_advisory.steps,
+              advisoryText: response.structured_advisory.advisoryText,
+            }
+          : undefined,
+      };
 
       setMessages((prev) => [...prev, aiMsg]);
+    } catch (err: any) {
+      console.error('GenAI Assistant error:', err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: 'assistant',
+          timestamp: `${currentTimestep.toString().padStart(2, '0')}:00:02`,
+          content: `### ⚠️ Assistant Communication Notice\n\nCould not connect to the GenAI decision support service. Please ensure the backend is running on port 8000.`,
+        },
+      ]);
+    } finally {
       setIsGenerating(false);
-    }, 900);
+    }
   };
 
   return (
@@ -156,7 +142,7 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
               <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
                 HydroTwin GenAI Decision Support
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">
-                  GPT-4o Telemetry Integration
+                  Google Gemini 2.5 Flash / Expert Fallback
                 </span>
               </h2>
               <p className="text-[11px] text-slate-400">
@@ -205,6 +191,15 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
                       : 'bg-slate-900/90 border border-slate-800 text-slate-200 rounded-bl-none shadow-md'
                   }`}
                 >
+                  {m.modelUsed && m.sender === 'assistant' && (
+                    <div className="mb-2.5">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono inline-flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
+                        {m.modelUsed}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="whitespace-pre-line mb-2">{m.content}</div>
 
                   {/* Structured Advisory Block */}

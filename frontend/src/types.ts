@@ -124,3 +124,18 @@ export interface DemandForecastResponse {
   };
   forecast_24h: HourlyForecastPoint[];
 }
+
+export interface StructuredAdvisory {
+  severity: 'NORMAL' | 'ELEVATED' | 'CRITICAL';
+  rootCause: string;
+  steps: string[];
+  advisoryText: string;
+}
+
+export interface AskAIResponse {
+  status: string;
+  model_used: string;
+  response_text: string;
+  structured_advisory: StructuredAdvisory;
+  incident_id?: number;
+}

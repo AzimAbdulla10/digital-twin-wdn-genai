@@ -1,4 +1,4 @@
-import type { NetworkTopology, SimulationResults, MLPrediction, DemandForecastResponse } from './types';
+import type { NetworkTopology, SimulationResults, MLPrediction, DemandForecastResponse, AskAIResponse } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -66,6 +66,30 @@ export async function fetchDemandForecast(temp: number = 24.0, isWeekend: number
   const res = await fetch(`${API_BASE_URL}/forecast-demand?temp=${temp}&is_weekend=${isWeekend}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch demand forecast: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function askAIAssistant(payload: {
+  prompt: string;
+  current_timestep?: number;
+  temperature?: number;
+  is_weekend?: number;
+  leak_node_id?: string | null;
+  current_pressures?: Record<string, number>;
+  ai_alert?: any;
+  risk_assessment?: any;
+  disambiguation?: any;
+}): Promise<AskAIResponse> {
+  const res = await fetch(`${API_BASE_URL}/ask-ai`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to consult GenAI Assistant: ${res.statusText}`);
   }
   return res.json();
 }
