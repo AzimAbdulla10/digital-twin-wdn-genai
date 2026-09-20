@@ -133,29 +133,29 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
       {/* Left Column: Live Context & Chat Transcript (8 Cols) */}
       <div className="lg:col-span-8 flex flex-col gap-4">
         {/* Real-Time Digital Twin Context Ribbon */}
-        <div className="bg-slate-950/90 rounded-2xl border border-slate-800 p-4 flex items-center justify-between shadow-lg text-xs">
+        <div className="bg-[#000000]/90 rounded-lg border border-zinc-800 p-4 flex items-center justify-between  text-xs">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+            <div className="p-2 rounded-md bg-cyan-500/10 text-zinc-400 border border-cyan-500/20">
               <Bot className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <h2 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
                 HydroTwin GenAI Decision Support
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">
                   Google Gemini 3.6 Flash / Expert Fallback
                 </span>
               </h2>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-zinc-400">
                 Ground-truth physical context injected directly from WNTR & ML inference engines
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 font-mono text-[11px]">
-            <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
-              Hour: <span className="text-cyan-400 font-bold">{currentTimestep}:00</span>
+            <span className="px-2.5 py-1 rounded-lg bg-[#09090b] border border-zinc-800 text-zinc-300">
+              Hour: <span className="text-zinc-400 font-bold">{currentTimestep}:00</span>
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+            <span className="px-2.5 py-1 rounded-lg bg-[#09090b] border border-zinc-800 text-zinc-300">
               Temp: <span className="text-amber-400 font-bold">{temperature}°C</span> ({isWeekend ? 'Weekend' : 'Weekday'})
             </span>
             <span
@@ -171,7 +171,7 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
         </div>
 
         {/* Chat Transcript Window */}
-        <div className="bg-slate-950/90 rounded-2xl border border-slate-800 p-5 flex flex-col h-[520px] shadow-xl overflow-hidden">
+        <div className="bg-[#000000]/90 rounded-lg border border-zinc-800 p-5 flex flex-col h-[520px]  overflow-hidden">
           <div className="flex-1 overflow-y-auto space-y-4 pr-2">
             {messages.map((m) => (
               <div
@@ -179,23 +179,23 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
                 className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.sender === 'assistant' && (
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-cyan-500/20">
+                  <div className="w-8 h-8 rounded-md bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white shrink-0 shadow-md shadow-cyan-500/20">
                     <Sparkles className="w-4 h-4" />
                   </div>
                 )}
 
                 <div
-                  className={`max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${
+                  className={`max-w-[85%] rounded-lg p-4 text-xs leading-relaxed ${
                     m.sender === 'user'
                       ? 'bg-cyan-600 text-white rounded-br-none shadow-md'
-                      : 'bg-slate-900/90 border border-slate-800 text-slate-200 rounded-bl-none shadow-md'
+                      : 'bg-[#09090b]/90 border border-zinc-800 text-zinc-200 rounded-bl-none shadow-md'
                   }`}
                 >
                   {m.sender === 'assistant' && (
                     <div className="mb-2.5 flex items-center justify-between gap-2 flex-wrap">
                       {m.modelUsed && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono inline-flex items-center gap-1">
-                          <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
+                          <Sparkles className="w-2.5 h-2.5 text-zinc-400" />
                           {m.modelUsed}
                         </span>
                       )}
@@ -218,39 +218,39 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
                   {m.sender === 'user' ? (
                     <div className="whitespace-pre-wrap">{m.content}</div>
                   ) : (
-                    <div className="space-y-1.5 text-slate-200">
+                    <div className="space-y-1.5 text-zinc-200">
                       <ReactMarkdown
                         components={{
                           h1: ({ ...props }) => (
-                            <h1 className="text-sm font-bold text-cyan-300 border-b border-slate-800 pb-1 mt-3 mb-2" {...props} />
+                            <h1 className="text-sm font-bold text-cyan-300 border-b border-zinc-800 pb-1 mt-3 mb-2" {...props} />
                           ),
                           h2: ({ ...props }) => (
-                            <h2 className="text-xs font-bold text-slate-100 mt-2.5 mb-1.5" {...props} />
+                            <h2 className="text-xs font-bold text-zinc-100 mt-2.5 mb-1.5" {...props} />
                           ),
                           h3: ({ ...props }) => (
-                            <h3 className="text-xs font-bold text-cyan-400 mt-2 mb-1" {...props} />
+                            <h3 className="text-xs font-bold text-zinc-400 mt-2 mb-1" {...props} />
                           ),
                           h4: ({ ...props }) => (
-                            <h4 className="text-[11px] font-semibold text-slate-300 mt-1.5 mb-0.5" {...props} />
+                            <h4 className="text-[11px] font-semibold text-zinc-300 mt-1.5 mb-0.5" {...props} />
                           ),
                           p: ({ ...props }) => (
-                            <p className="text-xs text-slate-200 leading-relaxed mb-2" {...props} />
+                            <p className="text-xs text-zinc-200 leading-relaxed mb-2" {...props} />
                           ),
                           ul: ({ ...props }) => (
-                            <ul className="list-disc list-outside ml-4 space-y-1 my-1.5 text-xs text-slate-300" {...props} />
+                            <ul className="list-disc list-outside ml-4 space-y-1 my-1.5 text-xs text-zinc-300" {...props} />
                           ),
                           ol: ({ ...props }) => (
-                            <ol className="list-decimal list-outside ml-4 space-y-1 my-1.5 text-xs text-slate-300" {...props} />
+                            <ol className="list-decimal list-outside ml-4 space-y-1 my-1.5 text-xs text-zinc-300" {...props} />
                           ),
                           li: ({ ...props }) => (
-                            <li className="text-xs text-slate-200 leading-relaxed" {...props} />
+                            <li className="text-xs text-zinc-200 leading-relaxed" {...props} />
                           ),
                           strong: ({ ...props }) => (
                             <strong className="font-semibold text-white" {...props} />
                           ),
-                          hr: () => <hr className="border-slate-800 my-2" />,
+                          hr: () => <hr className="border-zinc-800 my-2" />,
                           code: ({ ...props }) => (
-                            <code className="bg-slate-800 text-cyan-300 px-1 py-0.5 rounded font-mono text-[11px]" {...props} />
+                            <code className="bg-zinc-800 text-cyan-300 px-1 py-0.5 rounded font-mono text-[11px]" {...props} />
                           ),
                         }}
                       >
@@ -267,8 +267,8 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
             ))}
 
             {isGenerating && (
-              <div className="flex gap-3 justify-start items-center text-xs text-slate-400">
-                <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center animate-spin text-cyan-400">
+              <div className="flex gap-3 justify-start items-center text-xs text-zinc-400">
+                <div className="w-8 h-8 rounded-md bg-[#09090b] border border-zinc-800 flex items-center justify-center animate-spin text-zinc-400">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <span>Analyzing WNTR network state and formulating optimal advisory...</span>
@@ -277,7 +277,7 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
           </div>
 
           {/* Prompt Input Form */}
-          <div className="mt-4 pt-3 border-t border-slate-800">
+          <div className="mt-4 pt-3 border-t border-zinc-800">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -290,12 +290,12 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}
                 placeholder="Ask the AI operator assistant anything about current network status, leaks, or pumping..."
-                className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50"
+                className="flex-1 bg-[#09090b] border border-zinc-800 rounded-md px-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-cyan-500/50"
               />
               <button
                 type="submit"
                 disabled={isGenerating || !inputQuery.trim()}
-                className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-cyan-600/20"
+                className="px-4 py-2.5 rounded-md bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer  shadow-cyan-600/20"
               >
                 <span>Send</span>
                 <Send className="w-3.5 h-3.5" />
@@ -308,9 +308,9 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
       {/* Right Column: Suggested Inquiries & Diagnostic Telemetry (4 Cols) */}
       <div className="lg:col-span-4 flex flex-col gap-4">
         {/* Suggested Queries */}
-        <div className="bg-slate-950/90 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col gap-3">
-          <div className="flex items-center gap-2 text-slate-200 text-xs font-semibold">
-            <HelpCircle className="w-4 h-4 text-cyan-400" />
+        <div className="bg-[#000000]/90 rounded-lg border border-zinc-800 p-5  flex flex-col gap-3">
+          <div className="flex items-center gap-2 text-zinc-200 text-xs font-semibold">
+            <HelpCircle className="w-4 h-4 text-zinc-400" />
             <span>Suggested Inquiries</span>
           </div>
 
@@ -320,7 +320,7 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
                 key={idx}
                 onClick={() => handleSendPrompt(q)}
                 disabled={isGenerating}
-                className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/80 border border-slate-800 text-left text-[11px] text-slate-300 hover:text-cyan-300 transition-all cursor-pointer"
+                className="p-2.5 rounded-md bg-[#09090b]/80 hover:bg-zinc-800/80 border border-zinc-800 text-left text-[11px] text-zinc-300 hover:text-cyan-300 transition-all cursor-pointer"
               >
                 {q}
               </button>
@@ -329,15 +329,15 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
         </div>
 
         {/* Live Context Card */}
-        <div className="bg-slate-950/90 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col gap-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-200 font-semibold">
+        <div className="bg-[#000000]/90 rounded-lg border border-zinc-800 p-5  flex flex-col gap-3 text-xs">
+          <div className="flex items-center gap-2 text-zinc-200 font-semibold">
             <Cpu className="w-4 h-4 text-purple-400" />
             <span>Injected AI Context Vector</span>
           </div>
 
           <div className="space-y-2 font-mono text-[11px]">
-            <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-              <span className="text-slate-400">Leak ML Probability:</span>
+            <div className="p-2.5 rounded-md bg-[#09090b]/80 border border-zinc-800 flex items-center justify-between">
+              <span className="text-zinc-400">Leak ML Probability:</span>
               <span
                 className={`font-bold ${
                   aiAlert.isLeakDetected ? 'text-red-400' : 'text-emerald-400'
@@ -347,22 +347,22 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
               </span>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-              <span className="text-slate-400">Active Node Breach:</span>
-              <span className="font-bold text-slate-200">
+            <div className="p-2.5 rounded-md bg-[#09090b]/80 border border-zinc-800 flex items-center justify-between">
+              <span className="text-zinc-400">Active Node Breach:</span>
+              <span className="font-bold text-zinc-200">
                 {leakNodeId ? `Junction J${leakNodeId}` : 'None'}
               </span>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-              <span className="text-slate-400">Forecast Demand (LPS):</span>
+            <div className="p-2.5 rounded-md bg-[#09090b]/80 border border-zinc-800 flex items-center justify-between">
+              <span className="text-zinc-400">Forecast Demand (LPS):</span>
               <span className="font-bold text-purple-300">
                 {currentResults?.forecast?.forecast_24h[currentTimestep]?.forecast_demand_lps ?? 66.7} L/s
               </span>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
-              <span className="text-slate-400">Tank 2 Reserve Level:</span>
+            <div className="p-2.5 rounded-md bg-[#09090b]/80 border border-zinc-800 flex items-center justify-between">
+              <span className="text-zinc-400">Tank 2 Reserve Level:</span>
               <span className="font-bold text-cyan-300">
                 {currentResults?.tank_levels?.['2']?.[currentTimestep]?.toFixed(1) ?? '36.6'} m
               </span>

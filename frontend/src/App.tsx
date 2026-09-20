@@ -197,37 +197,37 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-white">
+    <div className="min-h-screen bg-[#000000] text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-white">
       {/* Top Main Navigation Header Bar */}
-      <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80 px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+      <header className="sticky top-0 z-50 bg-[#000000]/90 backdrop-blur-xl border-b border-zinc-800/80 px-6 py-3 flex flex-wrap items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <div className="w-9 h-9 rounded-md bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center  shadow-cyan-500/20">
             <Droplet className="w-5 h-5 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-slate-100 tracking-tight m-0">
+              <h1 className="text-base font-bold text-zinc-100 tracking-tight m-0">
                 HydroTwin AI
               </h1>
-              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full bg-cyan-500/10 text-zinc-400 border border-cyan-500/30">
                 v1.0 Digital Twin
               </span>
             </div>
-            <p className="text-xs text-slate-400 m-0">
+            <p className="text-xs text-zinc-400 m-0">
               AI-Driven Water Distribution Twin • WNTR + EPANET + Scikit-Learn
             </p>
           </div>
         </div>
 
         {/* Top-Level Navigation Modules */}
-        <nav className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800 shadow-inner">
+        <nav className="flex items-center gap-1.5 bg-[#09090b]/90 p-1 rounded-md border border-zinc-800 ">
           <button
             onClick={() => setCurrentView('twin')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               currentView === 'twin'
                 ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
-                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
             }`}
           >
             <Activity className="w-4 h-4" />
@@ -239,7 +239,7 @@ export const App: React.FC = () => {
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               currentView === 'forecast'
                 ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm shadow-purple-500/10'
-                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
             }`}
           >
             <TrendingUp className="w-4 h-4" />
@@ -250,29 +250,29 @@ export const App: React.FC = () => {
             onClick={() => setCurrentView('genai')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               currentView === 'genai'
-                ? 'bg-gradient-to-r from-cyan-500/20 to-indigo-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                ? 'bg-white text-black border border-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
             }`}
           >
-            <Bot className="w-4 h-4 text-cyan-400" />
+            <Bot className={`w-4 h-4 ${currentView === "genai" ? "text-black" : "text-zinc-400"}`} />
             <span>GenAI Operator Assistant</span>
-            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <Sparkles className={`w-3 h-3 ${currentView === "genai" ? "text-black" : "text-zinc-500"}`} />
           </button>
         </nav>
 
         {/* Global Controls & Status */}
         <div className="flex items-center gap-4">
           {/* 24-Hour Timeline Scrubber */}
-          <div className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl shadow-inner">
-            <Clock className="w-4 h-4 text-cyan-400" />
-            <span className="text-xs text-slate-300 font-medium">Timeline:</span>
+          <div className="flex items-center gap-2.5 bg-[#09090b]/90 border border-zinc-800 px-3 py-1.5 rounded-md ">
+            <Clock className="w-4 h-4 text-zinc-400" />
+            <span className="text-xs text-zinc-300 font-medium">Timeline:</span>
             <input
               type="range"
               min="0"
               max="24"
               value={currentTimestep}
               onChange={(e) => setCurrentTimestep(parseInt(e.target.value))}
-              className="w-24 accent-cyan-400 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
+              className="w-24 accent-cyan-400 bg-zinc-800 rounded-lg h-1.5 cursor-pointer"
             />
             <span className="text-xs font-mono font-bold text-cyan-300 w-11">
               {currentTimestep.toString().padStart(2, '0')}:00
@@ -283,7 +283,7 @@ export const App: React.FC = () => {
           <button
             onClick={handleReset}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#09090b] hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-medium transition-all active:scale-95 cursor-pointer"
             title="Reset to baseline"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -308,7 +308,7 @@ export const App: React.FC = () => {
       <main className="flex-1 p-6 max-w-[1700px] w-full mx-auto">
         {/* Error Banner */}
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-950/50 border border-red-500/40 text-red-300 text-sm flex items-center justify-between">
+          <div className="mb-6 p-4 rounded-md bg-red-950/50 border border-red-500/40 text-red-300 text-sm flex items-center justify-between">
             <span>{error}</span>
             <button
               onClick={() => setError(null)}

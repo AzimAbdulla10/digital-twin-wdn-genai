@@ -33,7 +33,7 @@ const PRESETS: ScenarioPreset[] = [
     label: 'Nominal Baseline (22°C)',
     temp: 22.0,
     isWeekend: 0,
-    icon: <Sparkles className="w-3.5 h-3.5 text-cyan-400" />,
+    icon: <Sparkles className="w-3.5 h-3.5 text-zinc-400" />,
     desc: 'Standard weekday diurnal demand',
   },
   {
@@ -71,14 +71,14 @@ export const ScenarioControlBar: React.FC<ScenarioControlBarProps> = ({
   isLoading,
 }) => {
   return (
-    <div className="bg-slate-950/90 border-b border-slate-800/80 px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 shadow-md">
+    <div className="bg-[#000000]/90 border-b border-zinc-800/80 px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 shadow-md">
       {/* Left: Section Title & Presets */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 pr-3 border-r border-slate-800">
-          <div className="p-1 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+        <div className="flex items-center gap-2 pr-3 border-r border-zinc-800">
+          <div className="p-1 rounded-lg bg-cyan-500/10 text-zinc-400 border border-cyan-500/20">
             <Zap className="w-3.5 h-3.5" />
           </div>
-          <span className="text-xs font-semibold text-slate-200 tracking-tight">
+          <span className="text-xs font-semibold text-zinc-200 tracking-tight">
             Predictive Scenario:
           </span>
         </div>
@@ -96,7 +96,7 @@ export const ScenarioControlBar: React.FC<ScenarioControlBarProps> = ({
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-sm shadow-cyan-500/10'
-                    : 'bg-slate-900/90 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800'
+                    : 'bg-[#09090b]/90 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
                 }`}
               >
                 {p.icon}
@@ -110,11 +110,11 @@ export const ScenarioControlBar: React.FC<ScenarioControlBarProps> = ({
       {/* Right: Custom Environmental Controls & Quick Risk KPI */}
       <div className="flex items-center gap-4 flex-wrap">
         {/* Sliders Box */}
-        <div className="flex items-center gap-3 bg-slate-900/90 px-3 py-1 rounded-xl border border-slate-800 text-xs">
+        <div className="flex items-center gap-3 bg-[#09090b]/90 px-3 py-1 rounded-md border border-zinc-800 text-xs">
           {/* Temperature Slider */}
           <div className="flex items-center gap-1.5">
             <Thermometer className="w-3.5 h-3.5 text-amber-400" />
-            <span className="text-slate-400">Temp:</span>
+            <span className="text-zinc-400">Temp:</span>
             <input
               type="range"
               min="10"
@@ -122,12 +122,12 @@ export const ScenarioControlBar: React.FC<ScenarioControlBarProps> = ({
               step="1"
               value={temperature}
               onChange={(e) => onScenarioChange(parseFloat(e.target.value), isWeekend, 'custom')}
-              className="w-20 accent-amber-400 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
+              className="w-20 accent-amber-400 bg-zinc-800 rounded-lg h-1.5 cursor-pointer"
             />
             <span className="font-mono font-bold text-amber-300 w-9">{temperature}°C</span>
           </div>
 
-          <span className="text-slate-700">|</span>
+          <span className="text-zinc-700">|</span>
 
           {/* Weekend Toggle */}
           <button
@@ -135,7 +135,7 @@ export const ScenarioControlBar: React.FC<ScenarioControlBarProps> = ({
             className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors cursor-pointer ${
               isWeekend === 1
                 ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-zinc-200'
             }`}
           >
             {isWeekend === 1 ? 'Weekend' : 'Weekday'}
@@ -145,8 +145,8 @@ export const ScenarioControlBar: React.FC<ScenarioControlBarProps> = ({
         {/* 24h Risk Badge */}
         {riskAssessment && (
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-mono flex items-center gap-1.5">
-              <span className="text-slate-500">Min P:</span>
+            <span className="text-[11px] px-2.5 py-1 rounded-lg bg-[#09090b] border border-zinc-800 text-zinc-300 font-mono flex items-center gap-1.5">
+              <span className="text-zinc-500">Min P:</span>
               <span
                 className={
                   riskAssessment.min_pressure.status === 'ELEVATED_STRESS'
@@ -158,13 +158,13 @@ export const ScenarioControlBar: React.FC<ScenarioControlBarProps> = ({
               </span>
             </span>
 
-            <span className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-mono flex items-center gap-1.5">
-              <span className="text-slate-500">Tank 2:</span>
+            <span className="text-[11px] px-2.5 py-1 rounded-lg bg-[#09090b] border border-zinc-800 text-zinc-300 font-mono flex items-center gap-1.5">
+              <span className="text-zinc-500">Tank 2:</span>
               <span
                 className={
                   riskAssessment.tank_reserve.status === 'DEPLETION_RISK'
                     ? 'text-red-400 font-bold'
-                    : 'text-cyan-400 font-bold'
+                    : 'text-zinc-400 font-bold'
                 }
               >
                 {riskAssessment.tank_reserve.capacity_pct}% reserve
