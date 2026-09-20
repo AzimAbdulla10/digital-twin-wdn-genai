@@ -66,7 +66,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full min-h-[480px] bg-slate-950 rounded-2xl border border-slate-800/80 p-4 flex flex-col shadow-2xl overflow-hidden backdrop-blur-sm">
+    <div className="relative w-full h-full min-h-[480px] bg-[#000000] rounded-lg border border-zinc-800/80 p-4 flex flex-col shadow-2xl overflow-hidden backdrop-blur-sm">
       {/* Header info badge */}
       <div className="flex items-center justify-between z-10 mb-2">
         <div className="flex items-center gap-2">
@@ -74,13 +74,13 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
             <Waves className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-100 tracking-wide">Network Topology Visualizer</h3>
-            <p className="text-xs text-slate-400">EPANET Net1 Digital Twin Model</p>
+            <h3 className="text-sm font-semibold text-zinc-100 tracking-wide">Network Topology Visualizer</h3>
+            <p className="text-xs text-zinc-400">EPANET Net1 Digital Twin Model</p>
           </div>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 text-xs text-slate-400 bg-slate-900/90 px-3 py-1.5 rounded-full border border-slate-800 shadow-inner">
+        <div className="flex items-center gap-4 text-xs text-zinc-400 bg-[#09090b]/90 px-3 py-1.5 rounded-full border border-zinc-800 ">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-500/50"></span>
             <span>Reservoir (Source)</span>
@@ -95,7 +95,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
           </div>
           {leakNodeId && (
             <div className="flex items-center gap-1.5 animate-pulse text-red-400 font-medium">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block shadow-lg shadow-red-500"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block  shadow-red-500"></span>
               <span>Active Leak</span>
             </div>
           )}
@@ -288,7 +288,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
                       fill="#064e3b"
                       stroke="#34d399"
                       strokeWidth="2.5"
-                      className="group-hover:brightness-125 transition-all shadow-lg"
+                      className="group-hover:brightness-125 transition-all "
                     />
                   ) : node.type === 'tank' ? (
                     // Tank: Cylinder / Rounded Rect
@@ -301,7 +301,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
                       fill="#312e81"
                       stroke="#818cf8"
                       strokeWidth="2.5"
-                      className="group-hover:brightness-125 transition-all shadow-lg"
+                      className="group-hover:brightness-125 transition-all "
                     />
                   ) : (
                     // Junction: Circle
@@ -408,7 +408,7 @@ export const NetworkMap: React.FC<NetworkMapProps> = ({
       </div>
 
       {/* Footer controls hint */}
-      <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-800/60 z-10">
+      <div className="flex items-center justify-between text-xs text-zinc-500 pt-2 border-t border-zinc-800/60 z-10">
         <span className="flex items-center gap-1">
           <Activity className="w-3.5 h-3.5 text-cyan-400" /> Click any node or pipe to inspect live hydraulic parameters
         </span>

@@ -226,7 +226,7 @@ export const App: React.FC = () => {
             onClick={() => setCurrentView('twin')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               currentView === 'twin'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10'
+                ? 'bg-white text-black border border-white shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
             }`}
           >
@@ -238,7 +238,7 @@ export const App: React.FC = () => {
             onClick={() => setCurrentView('forecast')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               currentView === 'forecast'
-                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm shadow-purple-500/10'
+                ? 'bg-white text-black border border-white shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
             }`}
           >

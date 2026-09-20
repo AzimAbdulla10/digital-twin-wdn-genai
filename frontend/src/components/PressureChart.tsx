@@ -30,7 +30,7 @@ export const PressureChart: React.FC<PressureChartProps> = ({
 }) => {
   if (!selectedNode) {
     return (
-      <div className="w-full h-72 bg-slate-950/80 rounded-2xl border border-slate-800 p-6 flex flex-col items-center justify-center text-slate-500">
+      <div className="w-full h-72 bg-[#000000]/80 rounded-lg border border-zinc-800 p-6 flex flex-col items-center justify-center text-zinc-500">
         <Gauge className="w-10 h-10 mb-2 opacity-40 text-cyan-400" />
         <p className="text-sm">Select a junction or node on the map to inspect pressure history</p>
       </div>
@@ -56,7 +56,7 @@ export const PressureChart: React.FC<PressureChartProps> = ({
   const isTank = selectedNode.type === 'tank';
 
   return (
-    <div className="w-full bg-slate-950/90 rounded-2xl border border-slate-800 p-5 flex flex-col shadow-xl">
+    <div className="w-full bg-[#000000]/90 rounded-lg border border-zinc-800 p-5 flex flex-col ">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export const PressureChart: React.FC<PressureChartProps> = ({
             <Gauge className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
               {isTank ? 'Storage Level:' : 'Pressure Profile:'}{' '}
               <span className="text-cyan-400 font-mono">
                 {isTank ? `Tank ${selectedNode.id}` : `Node ${selectedNode.id}`}
@@ -79,7 +79,7 @@ export const PressureChart: React.FC<PressureChartProps> = ({
                 </span>
               )}
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-zinc-400">
               {isTank 
                 ? '24-Hour Tank Storage Level (m) & Buffer Reserve Trajectory'
                 : '24-Hour Pressure Head (m) Hydraulic Response'}
@@ -91,8 +91,8 @@ export const PressureChart: React.FC<PressureChartProps> = ({
         {currentResults && (
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <span className="text-xs text-slate-400">At Hour {currentTimestep}:00</span>
-              <div className="text-sm font-mono font-bold text-slate-200">
+              <span className="text-xs text-zinc-400">At Hour {currentTimestep}:00</span>
+              <div className="text-sm font-mono font-bold text-zinc-200">
                 {activeCurrent.toFixed(1)} m {isTank ? `(${((activeCurrent / 45.72) * 100).toFixed(0)}%)` : ''}
               </div>
             </div>
@@ -110,36 +110,27 @@ export const PressureChart: React.FC<PressureChartProps> = ({
       <div className="w-full h-56">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="baselineGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.0} />
-              </linearGradient>
-              <linearGradient id="simulatedGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={leakNodeId ? "#ef4444" : "#10b981"} stopOpacity={0.4} />
-                <stop offset="95%" stopColor={leakNodeId ? "#ef4444" : "#10b981"} stopOpacity={0.0} />
-              </linearGradient>
-            </defs>
+            
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-            <XAxis dataKey="hour" stroke="#64748b" fontSize={11} tickLine={false} />
-            <YAxis stroke="#64748b" fontSize={11} tickLine={false} domain={['auto', 'auto']} unit="m" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+            <XAxis dataKey="hour" stroke="#52525b" fontSize={11} tickLine={false} />
+            <YAxis stroke="#52525b" fontSize={11} tickLine={false} domain={['auto', 'auto']} unit="m" />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#090d16',
-                borderColor: '#1e293b',
+                backgroundColor: '#09090b',
+                borderColor: '#27272a',
                 borderRadius: '0.75rem',
                 fontSize: '12px',
-                color: '#f8fafc',
+                color: '#f4f4f5',
               }}
             />
             <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '6px' }} />
 
             <ReferenceLine
               x={`${currentTimestep}:00`}
-              stroke="#e2e8f0"
+              stroke="#3f3f46"
               strokeDasharray="3 3"
-              label={{ value: 'Current', fill: '#94a3b8', fontSize: 10, position: 'insideTopLeft' }}
+              label={{ value: 'Current', fill: '#71717a', fontSize: 10, position: 'insideTopLeft' }}
             />
 
             {/* Baseline Area */}
@@ -147,10 +138,10 @@ export const PressureChart: React.FC<PressureChartProps> = ({
               type="monotone"
               dataKey="baseline"
               name="Baseline Normal"
-              stroke="#0ea5e9"
+              stroke="#71717a"
               strokeWidth={2}
               fillOpacity={1}
-              fill="url(#baselineGrad)"
+              fill="transparent"
             />
 
             {/* Simulated / Leak Area */}
@@ -159,11 +150,11 @@ export const PressureChart: React.FC<PressureChartProps> = ({
                 type="monotone"
                 dataKey="simulated"
                 name={leakNodeId ? "With Leak" : "Live Simulation"}
-                stroke={leakNodeId ? "#ef4444" : "#10b981"}
+                stroke={leakNodeId ? "#ef4444" : "#ffffff"}
                 strokeWidth={2.5}
                 strokeDasharray={leakNodeId ? "4 2" : undefined}
                 fillOpacity={1}
-                fill="url(#simulatedGrad)"
+                fill="transparent"
               />
             )}
           </AreaChart>

@@ -28,7 +28,7 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
   const presets = ['11', '12', '22', '31'];
 
   return (
-    <div className="w-full bg-slate-950/90 rounded-2xl border border-slate-800 p-5 flex flex-col shadow-xl">
+    <div className="w-full bg-[#000000]/90 rounded-lg border border-zinc-800 p-5 flex flex-col ">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -36,8 +36,8 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
             <Flame className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-100">Leak Injection Sandbox</h3>
-            <p className="text-xs text-slate-400">Simulate pipe burst anomalies via WNTR</p>
+            <h3 className="text-sm font-semibold text-zinc-100">Leak Injection Sandbox</h3>
+            <p className="text-xs text-zinc-400">Simulate pipe burst anomalies via WNTR</p>
           </div>
         </div>
 
@@ -50,7 +50,7 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
 
       {/* Preset Quick Buttons */}
       <div className="mb-4">
-        <label className="text-xs font-medium text-slate-400 mb-1.5 block">Quick Presets</label>
+        <label className="text-xs font-medium text-zinc-400 mb-1.5 block">Quick Presets</label>
         <div className="grid grid-cols-4 gap-2">
           {presets.map((p) => (
             <button
@@ -65,7 +65,7 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
                   ? 'bg-red-600/30 border-red-500 text-red-200'
                   : selectedJunction === p
                   ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-200'
-                  : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800 hover:border-slate-700'
+                  : 'bg-[#09090b] border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700'
               }`}
             >
               J{p} Leak
@@ -77,12 +77,12 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
       {/* Target Junction Selector & Leak Area Slider */}
       <div className="space-y-3 mb-4">
         <div>
-          <label className="text-xs font-medium text-slate-400 mb-1 block">Target Junction</label>
+          <label className="text-xs font-medium text-zinc-400 mb-1 block">Target Junction</label>
           <select
             value={selectedJunction}
             onChange={(e) => setSelectedJunction(e.target.value)}
             disabled={isLoading}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+            className="w-full bg-[#09090b] border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-cyan-500 font-mono"
           >
             {junctions
               .filter((j) => j.type === 'junction')
@@ -96,7 +96,7 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
 
         <div>
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-slate-400 flex items-center gap-1">
+            <span className="text-zinc-400 flex items-center gap-1">
               <Sliders className="w-3 h-3 text-cyan-400" /> Leak Orifice Area
             </span>
             <span className="font-mono text-cyan-300">{leakArea.toFixed(4)} m²</span>
@@ -109,7 +109,7 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
             value={leakArea}
             onChange={(e) => setLeakArea(parseFloat(e.target.value))}
             disabled={isLoading}
-            className="w-full accent-red-500 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
+            className="w-full accent-zinc-400 bg-zinc-800 rounded-lg h-1.5 cursor-pointer"
           />
         </div>
       </div>
@@ -119,7 +119,7 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
         <button
           onClick={handleInject}
           disabled={isLoading}
-          className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-medium py-2 px-4 rounded-xl text-sm transition-all shadow-lg shadow-red-900/30 disabled:opacity-50 active:scale-95 cursor-pointer"
+          className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-zinc-200 text-black border border-white font-medium py-2 px-4 rounded-md text-sm transition-all   disabled:opacity-50 active:scale-95 cursor-pointer"
         >
           {isLoading ? (
             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -133,7 +133,7 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
           onClick={onReset}
           disabled={isLoading || !activeLeakNodeId}
           title="Reset to Baseline"
-          className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 font-medium py-2 px-3.5 rounded-xl text-sm transition-all disabled:opacity-30 active:scale-95 cursor-pointer"
+          className="flex items-center justify-center gap-1.5 bg-[#09090b] hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 font-medium py-2 px-3.5 rounded-md text-sm transition-all disabled:opacity-30 active:scale-95 cursor-pointer"
         >
           <RotateCcw className="w-4 h-4" />
           <span>Reset</span>
