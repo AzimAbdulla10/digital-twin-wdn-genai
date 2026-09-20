@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import type { SimulationResults, AIAlert } from '../types';
 import { askAIAssistant } from '../api';
 import {
   Bot,
   Sparkles,
   Send,
-  CheckCircle2,
   Cpu,
   HelpCircle,
 } from 'lucide-react';
@@ -191,21 +191,15 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
                       : 'bg-slate-900/90 border border-slate-800 text-slate-200 rounded-bl-none shadow-md'
                   }`}
                 >
-                  {m.modelUsed && m.sender === 'assistant' && (
-                    <div className="mb-2.5">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono inline-flex items-center gap-1">
-                        <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
-                        {m.modelUsed}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="whitespace-pre-line mb-2">{m.content}</div>
-
-                  {/* Structured Advisory Block */}
-                  {m.structuredAdvisory && (
-                    <div className="mt-3 pt-3 border-t border-slate-800 space-y-2">
-                      <div className="flex items-center gap-2">
+                  {m.sender === 'assistant' && (
+                    <div className="mb-2.5 flex items-center justify-between gap-2 flex-wrap">
+                      {m.modelUsed && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono inline-flex items-center gap-1">
+                          <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
+                          {m.modelUsed}
+                        </span>
+                      )}
+                      {m.structuredAdvisory && (
                         <span
                           className={`text-[10px] px-2 py-0.5 rounded font-bold font-mono ${
                             m.structuredAdvisory.severity === 'CRITICAL'
@@ -215,25 +209,53 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
                               : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                           }`}
                         >
-                          SEVERITY: {m.structuredAdvisory.severity}
+                          STATUS: {m.structuredAdvisory.severity}
                         </span>
-                      </div>
+                      )}
+                    </div>
+                  )}
 
-                      <div className="text-[11px] text-slate-300 font-semibold">
-                        Recommended Operator Actions:
-                      </div>
-                      <div className="space-y-1">
-                        {m.structuredAdvisory.steps.map((step, idx) => (
-                          <div key={idx} className="text-[11px] text-slate-300 flex items-start gap-1.5 font-mono">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
-                            <span>{step}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <p className="text-[10px] text-slate-400 italic pt-1">
-                        💡 {m.structuredAdvisory.advisoryText}
-                      </p>
+                  {m.sender === 'user' ? (
+                    <div className="whitespace-pre-wrap">{m.content}</div>
+                  ) : (
+                    <div className="space-y-1.5 text-slate-200">
+                      <ReactMarkdown
+                        components={{
+                          h1: ({ ...props }) => (
+                            <h1 className="text-sm font-bold text-cyan-300 border-b border-slate-800 pb-1 mt-3 mb-2" {...props} />
+                          ),
+                          h2: ({ ...props }) => (
+                            <h2 className="text-xs font-bold text-slate-100 mt-2.5 mb-1.5" {...props} />
+                          ),
+                          h3: ({ ...props }) => (
+                            <h3 className="text-xs font-bold text-cyan-400 mt-2 mb-1" {...props} />
+                          ),
+                          h4: ({ ...props }) => (
+                            <h4 className="text-[11px] font-semibold text-slate-300 mt-1.5 mb-0.5" {...props} />
+                          ),
+                          p: ({ ...props }) => (
+                            <p className="text-xs text-slate-200 leading-relaxed mb-2" {...props} />
+                          ),
+                          ul: ({ ...props }) => (
+                            <ul className="list-disc list-outside ml-4 space-y-1 my-1.5 text-xs text-slate-300" {...props} />
+                          ),
+                          ol: ({ ...props }) => (
+                            <ol className="list-decimal list-outside ml-4 space-y-1 my-1.5 text-xs text-slate-300" {...props} />
+                          ),
+                          li: ({ ...props }) => (
+                            <li className="text-xs text-slate-200 leading-relaxed" {...props} />
+                          ),
+                          strong: ({ ...props }) => (
+                            <strong className="font-semibold text-white" {...props} />
+                          ),
+                          hr: () => <hr className="border-slate-800 my-2" />,
+                          code: ({ ...props }) => (
+                            <code className="bg-slate-800 text-cyan-300 px-1 py-0.5 rounded font-mono text-[11px]" {...props} />
+                          ),
+                        }}
+                      >
+                        {m.content}
+                      </ReactMarkdown>
                     </div>
                   )}
 
