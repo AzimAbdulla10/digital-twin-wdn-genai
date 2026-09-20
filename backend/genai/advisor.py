@@ -8,6 +8,13 @@ from .incident_logger import log_incident
 
 # Load environment variables
 load_dotenv()
+backend_env = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+if os.path.exists(backend_env):
+    load_dotenv(backend_env, override=True)
+root_env = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+if os.path.exists(root_env):
+    load_dotenv(root_env, override=True)
+
 logger = logging.getLogger("hydrotwin.genai")
 
 SYSTEM_INSTRUCTION = """You are HydroTwin GenAI, a Senior Hydraulic Operations & Incident Response Assistant for Municipal Water Distribution Networks.
@@ -195,7 +202,7 @@ def ask_genai_advisor(
     if current_pressures is None:
         current_pressures = {"10": 80.0, "11": 78.5, "12": 77.2, "13": 76.5, "21": 78.0, "22": 77.0, "23": 76.2, "31": 77.5, "32": 74.5}
         
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     full_prompt = _build_telemetry_prompt(
         user_prompt=user_prompt,
         timestep_hour=timestep_hour,
@@ -214,54 +221,66 @@ def ask_genai_advisor(
             from google import genai
             client = genai.Client(api_key=api_key.strip())
             
-            # Use gemini-2.5-flash
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=full_prompt,
-                config=genai.types.GenerateContentConfig(
-                    system_instruction=SYSTEM_INSTRUCTION,
-                    temperature=0.3,
+            response = None
+            used_model = "gemini-3.6-flash"
+            candidate_models = ["gemini-3.6-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"]
+            
+            for model_name in candidate_models:
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=full_prompt,
+                        config=genai.types.GenerateContentConfig(
+                            system_instruction=SYSTEM_INSTRUCTION,
+                            temperature=0.3,
+                        )
+                    )
+                    if response and (response.text or len(response.candidates or []) > 0):
+                        used_model = model_name
+                        break
+                except Exception as m_err:
+                    logger.warning(f"Gemini candidate {model_name} failed: {m_err}")
+            
+            if response and response.text:
+                response_text = response.text
+                is_leak = bool(leak_node_id or (ai_alert and ai_alert.get('isLeakDetected')))
+                severity = "CRITICAL" if is_leak else ("ELEVATED" if temperature >= 30.0 else "NORMAL")
+                
+                # Construct structured steps from response or defaults
+                steps = [
+                    f"1. SCADA Command: Regulate Valve on Sector {leak_node_id or '12'}." if is_leak else "1. Verify standard pump sequencing.",
+                    "2. Dynamic Pressure Modulation: Compensate via Pump 9." if is_leak else "2. Passive pressure sensor monitoring.",
+                    "3. Field Operations: Alert maintenance team." if is_leak else "3. Storage reserve nominal buffer maintained."
+                ]
+                
+                model_display_name = f"Google {used_model.replace('-', ' ').title()}"
+                structured_advisory = {
+                    "severity": severity,
+                    "rootCause": f"Live Gemini-analyzed incident at Hour {timestep_hour:02d}:00 (Leak: {is_leak}).",
+                    "steps": steps,
+                    "advisoryText": f"Verified by {model_display_name} on live cyber-physical telemetry."
+                }
+                
+                # Log to SQLite
+                incident_id = log_incident(
+                    user_prompt=user_prompt,
+                    ai_response=response_text,
+                    model_used=model_display_name,
+                    timestep_hour=timestep_hour,
+                    temperature=temperature,
+                    is_weekend=is_weekend,
+                    leak_node_id=leak_node_id,
+                    severity=severity,
+                    structured_data=json.dumps(structured_advisory)
                 )
-            )
-            
-            response_text = response.text or ""
-            is_leak = bool(leak_node_id or (ai_alert and ai_alert.get('isLeakDetected')))
-            severity = "CRITICAL" if is_leak else ("ELEVATED" if temperature >= 30.0 else "NORMAL")
-            
-            # Construct structured steps from response or defaults
-            steps = [
-                f"1. SCADA Command: Regulate Valve on Sector {leak_node_id or '12'}." if is_leak else "1. Verify standard pump sequencing.",
-                "2. Dynamic Pressure Modulation: Compensate via Pump 9." if is_leak else "2. Passive pressure sensor monitoring.",
-                "3. Field Operations: Alert maintenance team." if is_leak else "3. Storage reserve nominal buffer maintained."
-            ]
-            
-            structured_advisory = {
-                "severity": severity,
-                "rootCause": f"Live Gemini-analyzed incident at Hour {timestep_hour:02d}:00 (Leak: {is_leak}).",
-                "steps": steps,
-                "advisoryText": "Verified by Google Gemini 2.5 Flash on live cyber-physical telemetry."
-            }
-            
-            # Log to SQLite
-            incident_id = log_incident(
-                user_prompt=user_prompt,
-                ai_response=response_text,
-                model_used="gemini-2.5-flash",
-                timestep_hour=timestep_hour,
-                temperature=temperature,
-                is_weekend=is_weekend,
-                leak_node_id=leak_node_id,
-                severity=severity,
-                structured_data=json.dumps(structured_advisory)
-            )
-            
-            return {
-                "status": "success",
-                "model_used": "Google Gemini 2.5 Flash",
-                "response_text": response_text,
-                "structured_advisory": structured_advisory,
-                "incident_id": incident_id
-            }
+                
+                return {
+                    "status": "success",
+                    "model_used": model_display_name,
+                    "response_text": response_text,
+                    "structured_advisory": structured_advisory,
+                    "incident_id": incident_id
+                }
         except Exception as e:
             logger.warning(f"Google Gemini API call failed: {e}. Falling back to offline hydraulic expert.")
     

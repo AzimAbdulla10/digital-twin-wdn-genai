@@ -142,7 +142,7 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
               <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
                 HydroTwin GenAI Decision Support
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">
-                  Google Gemini 2.5 Flash / Expert Fallback
+                  Google Gemini 3.6 Flash / Expert Fallback
                 </span>
               </h2>
               <p className="text-[11px] text-slate-400">
