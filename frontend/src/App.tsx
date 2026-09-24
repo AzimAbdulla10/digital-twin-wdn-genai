@@ -210,13 +210,7 @@ export const App: React.FC = () => {
               <h1 className="text-base font-bold text-zinc-100 tracking-tight m-0">
                 HydroTwin AI
               </h1>
-              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full bg-cyan-500/10 text-zinc-400 border border-cyan-500/30">
-                v1.0 Digital Twin
-              </span>
             </div>
-            <p className="text-xs text-zinc-400 m-0">
-              AI-Driven Water Distribution Twin • WNTR + EPANET + Scikit-Learn
-            </p>
           </div>
         </div>
 
