@@ -1,5 +1,6 @@
 import React from 'react';
 import type { AIAlert, DisambiguationInfo, RiskAssessment } from '../types';
+
 import {
   ShieldCheck,
   AlertTriangle,
@@ -200,11 +201,13 @@ export const AIAlertCard: React.FC<AIAlertCardProps> = ({
         >
           <span className="flex items-center gap-1.5">
             <Zap className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Generate GPT Explanation & Advisory</span>
+            <span>Generate Gemini Incident Triage</span>
           </span>
           <ArrowUpRight className="w-3.5 h-3.5 text-cyan-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
         </button>
       )}
+
+
     </div>
   );
 };

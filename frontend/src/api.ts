@@ -93,3 +93,31 @@ export async function askAIAssistant(payload: {
   }
   return res.json();
 }
+
+export async function sendTelegramAlert(payload: {
+  message?: string;
+  leak_node_id?: string;
+  leak_area?: number;
+  pressure_drop?: number;
+  confidence?: number;
+  temperature?: number;
+}): Promise<{
+  status: string;
+  chat_id?: string;
+  message_id?: number;
+  message?: string;
+  detail?: string;
+}> {
+  const res = await fetch(`${API_BASE_URL}/send-telegram-alert`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send Telegram alert: ${res.statusText}`);
+  }
+  return res.json();
+}
+

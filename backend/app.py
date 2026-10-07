@@ -8,6 +8,7 @@ import simulation
 import ai
 import demand_forecast
 import genai
+import notifications
 
 app = FastAPI(title="Water Distribution Network Digital Twin API")
 
@@ -40,6 +41,14 @@ class AskAIRequest(BaseModel):
     ai_alert: Optional[Dict[str, Any]] = None
     risk_assessment: Optional[Dict[str, Any]] = None
     disambiguation: Optional[Dict[str, Any]] = None
+
+class TelegramAlertRequest(BaseModel):
+    message: Optional[str] = None
+    leak_node_id: Optional[str] = "12"
+    leak_area: Optional[float] = 0.005
+    pressure_drop: Optional[float] = 26.4
+    confidence: Optional[float] = 96.4
+    temperature: Optional[float] = 28.0
 
 @app.get("/")
 def root():
@@ -117,7 +126,23 @@ def inject_leak(request: LeakRequest):
         baseline_p_hour12 = {node: baseline_res['pressures'][node][12] for node in baseline_res['pressures'] if node in ai.JUNCTIONS}
         
         # Real ML prediction from trained Random Forest
-        results['ai_detection'] = ai.predict_leak(current_p_hour12, baseline_p_hour12)
+        detection = ai.predict_leak(current_p_hour12, baseline_p_hour12)
+        results['ai_detection'] = detection
+        
+        # Autonomous Telegram Alert Trigger when leak likelihood > 50%
+        if detection.get('is_leak') and detection.get('leak_probability', 0.0) > 0.50:
+            try:
+                alert_msg = notifications.format_telegram_leak_alert(
+                    leak_node_id=str(detection.get('localized_node', request.node_id)),
+                    leak_area=request.leak_area or 0.005,
+                    pressure_drop=detection.get('max_pressure_drop', 25.0),
+                    confidence=detection.get('leak_probability', 0.95) * 100.0,
+                    temperature=temp
+                )
+                notifications.send_telegram_alert(message=alert_msg)
+            except Exception as notify_err:
+                # Log but do not block hydraulic simulation return
+                pass
         
         return results
     except Exception as e:
@@ -169,6 +194,26 @@ def ask_ai(request: AskAIRequest):
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"GenAI advisor failed: {str(e)}")
+
+@app.post("/send-telegram-alert")
+def send_telegram_alert(request: TelegramAlertRequest):
+    """
+    Dispatches a free instant emergency Telegram notification to field operators via @HydroTwinBot.
+    """
+    try:
+        msg = request.message
+        if not msg:
+            msg = notifications.format_telegram_leak_alert(
+                leak_node_id=request.leak_node_id or "12",
+                leak_area=request.leak_area or 0.005,
+                pressure_drop=request.pressure_drop or 26.4,
+                confidence=request.confidence or 96.4,
+                temperature=request.temperature or 28.0
+            )
+        result = notifications.send_telegram_alert(message=msg)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Telegram notification dispatch failed: {str(e)}")
 
 @app.get("/ai-incidents")
 def get_ai_incidents(limit: Optional[int] = 20):
