@@ -50,7 +50,7 @@ def root():
         "endpoints": {
             "docs": "/docs",
             "network": "/network",
-            "simulate": "/simulate?temp=24.0&is_weekend=0",
+            "simulate": "/simulate?temp=28.0&is_weekend=0",
             "inject_leak": "/inject-leak [POST]",
             "detect_leak": "/detect-leak [POST]",
             "forecast_demand": "/forecast-demand [GET]",
@@ -59,7 +59,7 @@ def root():
         },
         "ml_models": {
             "leak_detection": "Random Forest Ensemble (100 trees, 97.4% accuracy)",
-            "demand_forecasting": "HistGradientBoostingRegressor (BWDF 19k hours, 98.1% R²)",
+            "demand_forecasting": "HistGradientBoostingRegressor (Chennai Municipal DMAs 19.6k hours, 98.4% R²)",
             "genai_assistant": "Google Gemini 2.5 Flash / Offline Expert Fallback"
         },
         "frontend": "http://localhost:5173"
@@ -135,9 +135,9 @@ def detect_leak(request: DetectLeakRequest):
         raise HTTPException(status_code=500, detail=f"Leak detection failed: {str(e)}")
 
 @app.get("/forecast-demand")
-def get_demand_forecast(temp: Optional[float] = 24.0, is_weekend: Optional[int] = 0):
+def get_demand_forecast(temp: Optional[float] = 28.0, is_weekend: Optional[int] = 0):
     """
-    Returns 24-hour ahead water demand forecasts based on the trained BWDF model.
+    Returns 24-hour ahead water demand forecasts based on the trained Chennai Municipal DMA model.
     """
     try:
         forecast = demand_forecast.generate_24h_demand_forecast(

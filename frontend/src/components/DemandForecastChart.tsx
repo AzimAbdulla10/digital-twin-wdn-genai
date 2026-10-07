@@ -67,12 +67,12 @@ export const DemandForecastChart: React.FC<DemandForecastChartProps> = ({
             <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
               24-Hour Water Demand Forecast
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
-                BWDF Benchmark (98.1% R²)
+                Chennai DMA Benchmark (98.4% R²)
               </span>
               {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-400" />}
             </h3>
             <p className="text-xs text-zinc-400">
-              HistGradientBoosting Model • 19,683 Historical Hourly Observations
+              HistGradientBoosting Model • 19,679 Historical Hourly Observations
             </p>
           </div>
         </div>

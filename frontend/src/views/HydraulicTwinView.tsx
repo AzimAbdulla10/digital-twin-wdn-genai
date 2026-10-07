@@ -10,6 +10,7 @@ import { NetworkMap } from '../components/NetworkMap';
 import { PressureChart } from '../components/PressureChart';
 import { LeakControlPanel } from '../components/LeakControlPanel';
 import { AIAlertCard } from '../components/AIAlertCard';
+import { AIOverviewBanner } from '../components/AIOverviewBanner';
 import { Layers } from 'lucide-react';
 
 interface HydraulicTwinViewProps {
@@ -22,6 +23,8 @@ interface HydraulicTwinViewProps {
   onSelectLink: (link: NetworkLink | null) => void;
   leakNodeId: string | null;
   currentTimestep: number;
+  temperature?: number;
+  isWeekend?: number;
   aiAlert: AIAlert;
   onInjectLeak: (nodeId: string, leakArea: number) => Promise<void>;
   onReset: () => Promise<void>;
@@ -39,14 +42,41 @@ export const HydraulicTwinView: React.FC<HydraulicTwinViewProps> = ({
   onSelectLink,
   leakNodeId,
   currentTimestep,
+  temperature = 28.0,
+  isWeekend = 0,
   aiAlert,
   onInjectLeak,
   onReset,
   isLoading,
   onNavigateToGenAI,
 }) => {
+  // Extract current junction pressures for AI prompt context
+  const currentPressures: Record<string, number> = {};
+  if (currentResults && currentResults.pressures) {
+    Object.entries(currentResults.pressures).forEach(([nodeId, series]) => {
+      if (series && series[currentTimestep] !== undefined) {
+        currentPressures[nodeId] = series[currentTimestep];
+      }
+    });
+  }
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div>
+      {/* Top Banner: Real-Time Cyber-Physical Network Intelligence */}
+      <AIOverviewBanner
+        viewContext="hydraulic-twin"
+        title="Live Hydraulic Twin AI Overview"
+        currentTimestep={currentTimestep}
+        temperature={temperature}
+        isWeekend={isWeekend}
+        leakNodeId={leakNodeId}
+        currentPressures={currentPressures}
+        aiAlert={aiAlert}
+        riskAssessment={currentResults?.risk_assessment}
+        disambiguation={currentResults?.disambiguation}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left Column: Network Map & Pressure Time-Series (7 Cols) */}
       <div className="lg:col-span-7 flex flex-col gap-6">
         {/* Top: SVG Network Visualizer */}
@@ -190,5 +220,6 @@ export const HydraulicTwinView: React.FC<HydraulicTwinViewProps> = ({
         </div>
       </div>
     </div>
+  </div>
   );
 };

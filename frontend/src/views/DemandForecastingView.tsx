@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import type { DemandForecastResponse, RiskAssessment } from '../types';
 import { fetchDemandForecast } from '../api';
+import { AIOverviewBanner } from '../components/AIOverviewBanner';
 import {
   TrendingUp,
   Sun,
@@ -69,6 +70,17 @@ export const DemandForecastingView: React.FC<DemandForecastingViewProps> = ({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Top Banner: Chennai Municipal Demand AI Intelligence */}
+      <AIOverviewBanner
+        viewContext="demand-forecasting"
+        title="24-Hour Municipal Demand AI Intelligence"
+        currentTimestep={currentTimestep}
+        temperature={temperature}
+        isWeekend={isWeekend}
+        riskAssessment={riskAssessment}
+        forecastData={forecastData}
+      />
+
       {/* KPI Stats Grid (4 Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Peak Demand Card */}
@@ -124,10 +136,10 @@ export const DemandForecastingView: React.FC<DemandForecastingViewProps> = ({
           <div>
             <span className="text-xs text-zinc-400 block mb-1">Benchmark Dataset</span>
             <div className="text-base font-bold text-purple-300 truncate">
-              BWDF Real Inflow
+              Chennai DMA Dataset
             </div>
             <span className="text-[11px] text-zinc-400 mt-1 block font-mono">
-              19,683 Continuous Hours
+              19,679 Continuous Hours
             </span>
           </div>
           <div className="p-3 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">

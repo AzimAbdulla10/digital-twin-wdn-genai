@@ -55,7 +55,7 @@ export const GenAIAssistantView: React.FC<GenAIAssistantViewProps> = ({
       timestamp: '12:00:00',
       modelUsed: 'Google Gemini 2.5 Flash / Expert Fallback',
       content:
-        'HydroTwin GenAI Assistant online. I am continuously monitoring WNTR physical simulations, Random Forest leak alerts, and BWDF demand forecasts. How can I assist you with network operations today?',
+        'HydroTwin GenAI Assistant online. I am continuously monitoring WNTR physical simulations, Random Forest leak alerts, and Chennai DMA demand forecasts. How can I assist you with network operations today?',
     },
   ]);
   const [inputQuery, setInputQuery] = useState('');

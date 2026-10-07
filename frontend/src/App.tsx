@@ -237,7 +237,7 @@ export const App: React.FC = () => {
             }`}
           >
             <TrendingUp className="w-4 h-4" />
-            <span>Urban Demand Forecasting (BWDF)</span>
+            <span>Urban Demand Forecasting (Chennai)</span>
           </button>
 
           <button
@@ -325,6 +325,8 @@ export const App: React.FC = () => {
             onSelectLink={setSelectedLink}
             leakNodeId={leakNodeId}
             currentTimestep={currentTimestep}
+            temperature={temperature}
+            isWeekend={isWeekend}
             aiAlert={aiAlert}
             onInjectLeak={handleInjectLeak}
             onReset={handleReset}

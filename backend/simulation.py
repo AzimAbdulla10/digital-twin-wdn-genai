@@ -58,10 +58,10 @@ def get_network_topology():
         
     return {"nodes": nodes, "links": links}
 
-def run_hydraulic_simulation(leak_node_id=None, leak_area=0.005, temperature=24.0, is_weekend=0):
+def run_hydraulic_simulation(leak_node_id=None, leak_area=0.005, temperature=28.0, is_weekend=0):
     """
     Runs a 24-hour simulation using WNTR's PDD simulator driven by ML-forecasted demands.
-    - Uses Scikit-learn HistGradientBoosting model trained on BWDF dataset to predict hourly demand pattern.
+    - Uses Scikit-learn HistGradientBoosting model trained on Chennai Municipal DMA dataset to predict hourly demand pattern.
     - Dynamically updates EPANET pattern multipliers.
     - If leak_node_id is provided, injects a pipe leak starting at hour 4.
     - Computes 24h risk assessment and leak vs demand surge disambiguation.

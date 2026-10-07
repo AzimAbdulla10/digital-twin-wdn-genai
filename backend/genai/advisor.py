@@ -18,7 +18,7 @@ if os.path.exists(root_env):
 logger = logging.getLogger("hydrotwin.genai")
 
 SYSTEM_INSTRUCTION = """You are HydroTwin GenAI, a Senior Hydraulic Operations & Incident Response Assistant for Municipal Water Distribution Networks.
-You operate on top of an EPANET & WNTR cyber-physical digital twin with real-time Scikit-Learn Random Forest leak detection telemetry and BWDF demand forecasts.
+You operate on top of an EPANET & WNTR cyber-physical digital twin with real-time Scikit-Learn Random Forest leak detection telemetry and Chennai Municipal DMA demand forecasts.
 
 Your role:
 1. Provide concise, engineering-grade triage of water network conditions.
@@ -142,7 +142,7 @@ The digital twin has disambiguated elevated network inflow as a **legitimate con
 
 #### 1. Diagnostic Assessment
 - **Status:** Thermal Demand Surge (Elevated Consumer Draw)
-- **Network Integrity:** Nominal (All pressure deficits are uniform and match the BWDF 95% confidence interval)
+- **Network Integrity:** Nominal (All pressure deficits are uniform and match the Chennai DMA 95% confidence interval)
 - **Peak Flow:** High diurnal draw expected through 18:00
 
 #### 2. Recommended Operating Strategy
@@ -221,9 +221,14 @@ def ask_genai_advisor(
             from google import genai
             client = genai.Client(api_key=api_key.strip())
             
-            response = None
-            used_model = "gemini-3.6-flash"
-            candidate_models = ["gemini-3.6-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"]
+            used_model = "gemini-3.1-flash-lite"
+            candidate_models = [
+                "gemini-3.1-flash-lite",
+                "gemini-3-flash-preview",
+                "gemini-flash-latest",
+                "gemini-3.6-flash",
+                "gemini-3.8-flash"
+            ]
             
             for model_name in candidate_models:
                 try:

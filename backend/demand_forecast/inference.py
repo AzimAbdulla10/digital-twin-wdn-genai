@@ -34,28 +34,28 @@ def get_forecast_model():
             _CACHED_FORECAST_BUNDLE = joblib.load(MODEL_FILE)
     return _CACHED_FORECAST_BUNDLE
 
-def generate_24h_demand_forecast(base_temperature=24.0, is_weekend=0):
+def generate_24h_demand_forecast(base_temperature=28.0, is_weekend=0):
     """
-    Generates a 24-hour ahead municipal water demand forecast (L/s) using the trained BWDF model.
+    Generates a 24-hour ahead municipal water demand forecast (L/s) using the trained Chennai Municipal DMA model.
     Returns hourly predicted demand, 95% confidence intervals, and distributed junction demands.
     """
     bundle = get_forecast_model()
     model = bundle['model']
     feature_cols = bundle['feature_cols']
     metrics = bundle['metrics']
-    residual_std = metrics.get('residual_std', 8.5)
+    residual_std = metrics.get('residual_std', 4.16)
     
     # Net1 typical nominal scale is ~60-90 L/s
-    # BWDF total demand scale is ~200-450 L/s across 10 DMAs
+    # Chennai DMA total demand scale is ~200-410 L/s across 10 DMAs
     # We calibrate the scale factor so it maps seamlessly to Net1
-    scale_factor = 0.22  # Maps ~300 L/s city DMA to ~66 L/s Net1 network
+    scale_factor = 0.22  # Maps ~300 L/s municipal DMA to ~66 L/s Net1 network
     
     hourly_forecast = []
     
-    # Simulate realistic thermal cycle across 24 hours (cooler at night, peak heat at 14:00)
+    # Simulate realistic thermal cycle across 24 hours (cooler at night, peak tropical heat at 14:00)
     records = []
     for h in range(24):
-        temp_h = base_temperature + 5.5 * np.sin((h - 8) * np.pi / 12.0)
+        temp_h = base_temperature + 4.8 * np.sin((h - 8) * np.pi / 12.0)
         
         # Build feature vector
         h_sin = np.sin(2 * np.pi * h / 24.0)
@@ -64,9 +64,9 @@ def generate_24h_demand_forecast(base_temperature=24.0, is_weekend=0):
         dow_cos = np.cos(2 * np.pi * (5 if is_weekend else 2) / 7.0)
         
         # Diurnal pattern multiplier for synthetic lag estimation
-        diurnal_mult = 1.0 + 0.38 * np.sin((h - 5) * np.pi / 12.0) if 6 <= h <= 22 else 0.52
-        temp_factor = 1.0 + (base_temperature - 20.0) * 0.015 # +1.5% demand per degree above 20C
-        approx_lag = 310.0 * diurnal_mult * max(0.7, temp_factor)
+        diurnal_mult = 1.0 + 0.35 * np.sin((h - 5) * np.pi / 12.0) if 6 <= h <= 22 else 0.55
+        temp_factor = 1.0 + (base_temperature - 28.0) * 0.012 # +1.2% demand per degree above 28C
+        approx_lag = 313.0 * diurnal_mult * max(0.7, temp_factor)
         
         records.append({
             'hour_int': h,
@@ -75,19 +75,19 @@ def generate_24h_demand_forecast(base_temperature=24.0, is_weekend=0):
             'dow_sin': dow_sin,
             'dow_cos': dow_cos,
             'is_weekend': is_weekend,
-            'month': 7,
+            'month': 5, # May/summer peak season in Chennai
             'temperature_c': round(temp_h, 1),
             'rainfall_mm': 0.0,
             'is_raining': 0,
-            'humidity_pct': max(30.0, 75.0 - (temp_h - 15.0) * 1.5),
+            'humidity_pct': max(35.0, 78.0 - (temp_h - 25.0) * 1.8),
             'lag_1h': approx_lag * 0.98,
             'lag_2h': approx_lag * 0.95,
             'lag_24h': approx_lag,
             'lag_48h': approx_lag,
             'lag_168h': approx_lag,
             'rolling_mean_6h': approx_lag,
-            'rolling_mean_24h': 300.0 * temp_factor,
-            'rolling_std_24h': 65.0,
+            'rolling_mean_24h': 313.0 * temp_factor,
+            'rolling_std_24h': 35.0,
         })
         
     df_features = pd.DataFrame(records)
@@ -120,16 +120,18 @@ def generate_24h_demand_forecast(base_temperature=24.0, is_weekend=0):
     peak_hour = max(hourly_forecast, key=lambda x: x['forecast_demand_lps'])
     min_hour = min(hourly_forecast, key=lambda x: x['forecast_demand_lps'])
     
+    dataset_source = bundle.get('dataset_source', 'Chennai Municipal Water Distribution Network (Synthetic DMA Benchmark)')
+    
     return {
         'status': 'success',
-        'dataset_source': 'Battle of Water Demand Forecasting (BWDF) Italian Municipal DMAs',
+        'dataset_source': dataset_source,
         'model_type': 'Scikit-Learn HistGradientBoostingRegressor',
-        'model_r2_score': round(metrics.get('r2', 0.91), 4),
-        'model_mae_lps': round(metrics.get('mae', 12.4), 2),
+        'model_r2_score': round(metrics.get('r2', 0.9841), 4),
+        'model_mae_lps': round(metrics.get('mae', 3.16), 2),
         'peak_demand': {
             'hour': peak_hour['hour'],
             'value_lps': peak_hour['forecast_demand_lps'],
-            'warning': 'Expect elevated pipeline friction loss during morning commute.'
+            'warning': 'Expect elevated pipeline friction loss during morning peak consumption.'
         },
         'minimum_demand': {
             'hour': min_hour['hour'],

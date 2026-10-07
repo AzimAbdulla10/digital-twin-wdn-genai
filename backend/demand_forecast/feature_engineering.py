@@ -49,9 +49,9 @@ def build_demand_features(df, target_col='dma_1_lps'):
         df['rainfall_mm'] = 0.0
         
     if 'temperature_c' not in df.columns:
-        df['temperature_c'] = 20.0
+        df['temperature_c'] = 28.0
     if 'humidity_pct' not in df.columns:
-        df['humidity_pct'] = 60.0
+        df['humidity_pct'] = 70.0
         
     # Drop rows where 168h lag is NaN
     df_clean = df.dropna(subset=['lag_168h']).reset_index(drop=True)
