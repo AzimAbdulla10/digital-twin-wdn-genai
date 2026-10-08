@@ -11,6 +11,7 @@ import { fetchNetworkTopology, runBaselineSimulation, injectLeak, detectLeak } f
 import { HydraulicTwinView } from './views/HydraulicTwinView';
 import { DemandForecastingView } from './views/DemandForecastingView';
 import { GenAIAssistantView } from './views/GenAIAssistantView';
+import { EngineeringFormulationsView } from './views/EngineeringFormulationsView';
 import { ScenarioControlBar } from './components/ScenarioControlBar';
 import {
   Droplet,
@@ -20,6 +21,7 @@ import {
   TrendingUp,
   Bot,
   Sparkles,
+  Sigma,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -33,8 +35,8 @@ export const App: React.FC = () => {
   const [leakNodeId, setLeakNodeId] = useState<string | null>(null);
   const [currentTimestep, setCurrentTimestep] = useState<number>(12); // Hour 12:00 noon
   
-  // Top-Level Navigation View: 'twin' | 'forecast' | 'genai'
-  const [currentView, setCurrentView] = useState<'twin' | 'forecast' | 'genai'>('twin');
+  // Top-Level Navigation View: 'twin' | 'forecast' | 'genai' | 'formulations'
+  const [currentView, setCurrentView] = useState<'twin' | 'forecast' | 'genai' | 'formulations'>('twin');
 
   // Scenario and Environmental States
   const [temperature, setTemperature] = useState<number>(22.0);
@@ -255,6 +257,18 @@ export const App: React.FC = () => {
             <span>GenAI Operator Assistant</span>
             <Sparkles className={`w-3 h-3 ${currentView === "genai" ? "text-black" : "text-zinc-500"}`} />
           </button>
+
+          <button
+            onClick={() => setCurrentView('formulations')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              currentView === 'formulations'
+                ? 'bg-white text-black border border-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
+            }`}
+          >
+            <Sigma className={`w-4 h-4 ${currentView === "formulations" ? "text-black" : "text-zinc-400"}`} />
+            <span>Formulations & Physics</span>
+          </button>
         </nav>
 
         {/* Global Controls & Status */}
@@ -358,6 +372,11 @@ export const App: React.FC = () => {
             temperature={temperature}
             isWeekend={isWeekend}
           />
+        )}
+
+        {/* Tab 4: Engineering & Mathematical Formulations View */}
+        {currentView === 'formulations' && (
+          <EngineeringFormulationsView />
         )}
       </main>
     </div>
