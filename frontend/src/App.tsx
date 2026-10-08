@@ -74,7 +74,10 @@ export const App: React.FC = () => {
 
   // Update ML inference dynamically when currentTimestep or currentResults change
   useEffect(() => {
-    if (!currentResults || !baselineResults) return;
+    if (!leakNodeId || !currentResults || !baselineResults) {
+      setLiveMLPrediction(null);
+      return;
+    }
 
     const junctions = ['10', '11', '12', '13', '21', '22', '23', '31', '32'];
     const currentP: Record<string, number> = {};
@@ -88,7 +91,7 @@ export const App: React.FC = () => {
     detectLeak(currentP, baselineP)
       .then((pred) => setLiveMLPrediction(pred))
       .catch((e) => console.warn('Real-time ML inference warning:', e));
-  }, [currentTimestep, currentResults, baselineResults]);
+  }, [leakNodeId, currentTimestep, currentResults, baselineResults]);
 
   // Format AI Alert from Scikit-learn Prediction
   const aiAlert = useMemo<AIAlert>(() => {

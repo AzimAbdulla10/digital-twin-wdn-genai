@@ -57,7 +57,6 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
               key={p}
               onClick={() => {
                 setSelectedJunction(p);
-                onInjectLeak(p, leakArea);
               }}
               disabled={isLoading}
               className={`py-1.5 px-2 rounded-lg text-xs font-mono font-medium transition-all border ${
@@ -68,7 +67,7 @@ export const LeakControlPanel: React.FC<LeakControlPanelProps> = ({
                   : 'bg-[#09090b] border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700'
               }`}
             >
-              J{p} Leak
+              J{p}
             </button>
           ))}
         </div>
