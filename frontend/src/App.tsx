@@ -257,22 +257,10 @@ export const App: React.FC = () => {
             <span>GenAI Operator Assistant</span>
             <Sparkles className={`w-3 h-3 ${currentView === "genai" ? "text-black" : "text-zinc-500"}`} />
           </button>
-
-          <button
-            onClick={() => setCurrentView('formulations')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              currentView === 'formulations'
-                ? 'bg-white text-black border border-white shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200 border border-transparent'
-            }`}
-          >
-            <Sigma className={`w-4 h-4 ${currentView === "formulations" ? "text-black" : "text-zinc-400"}`} />
-            <span>Formulations & Physics</span>
-          </button>
         </nav>
 
         {/* Global Controls & Status */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {/* 24-Hour Timeline Scrubber */}
           <div className="flex items-center gap-2.5 bg-[#09090b]/90 border border-zinc-800 px-3 py-1.5 rounded-md ">
             <Clock className="w-4 h-4 text-zinc-400" />
@@ -299,6 +287,20 @@ export const App: React.FC = () => {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Sync</span>
+          </button>
+
+          {/* Small Top-Right Formulations & Physics Info Button */}
+          <button
+            onClick={() => setCurrentView((prev) => (prev === 'formulations' ? 'twin' : 'formulations'))}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-all active:scale-95 cursor-pointer ${
+              currentView === 'formulations'
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-sm shadow-cyan-500/20'
+                : 'bg-[#09090b] hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+            }`}
+            title="View Engineering & Mathematical Formulations"
+          >
+            <Sigma className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Formulas</span>
           </button>
         </div>
       </header>
@@ -376,7 +378,7 @@ export const App: React.FC = () => {
 
         {/* Tab 4: Engineering & Mathematical Formulations View */}
         {currentView === 'formulations' && (
-          <EngineeringFormulationsView />
+          <EngineeringFormulationsView onBack={() => setCurrentView('twin')} />
         )}
       </main>
     </div>

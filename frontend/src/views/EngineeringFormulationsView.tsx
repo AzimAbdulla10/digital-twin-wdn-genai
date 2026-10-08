@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import katex from 'katex';
 import {
   BookOpen,
   Sigma,
   Activity,
   Copy,
   Check,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface FormulaCard {
@@ -12,8 +14,7 @@ interface FormulaCard {
   category: 'hydraulics' | 'ml' | 'forecasting' | 'disambiguation';
   title: string;
   subtitle: string;
-  latexDisplay: string;
-  latexRaw: string;
+  latex: string;
   variables: { symbol: string; name: string; unit: string; description: string }[];
   explanation: string;
   engineeringSignificance: string;
@@ -26,8 +27,7 @@ const FORMULAS: FormulaCard[] = [
     category: 'hydraulics',
     title: 'Hazen-Williams Pipe Head Loss Equation',
     subtitle: 'Frictional Energy Dissipation in Water Distribution Networks',
-    latexDisplay: 'h_f = 10.67 \\cdot \\frac{L}{C^{1.852} \\cdot D^{4.8704}} \\cdot Q^{1.852}',
-    latexRaw: 'h_f = 10.67 \\cdot \\frac{L}{C^{1.852} \\cdot D^{4.8704}} \\cdot Q^{1.852}',
+    latex: 'h_f = 10.67 \\cdot \\frac{L}{C^{1.852} \\cdot D^{4.8704}} \\cdot Q^{1.852}',
     variables: [
       { symbol: 'h_f', name: 'Head Loss', unit: 'meters (m)', description: 'Frictional head loss along the pipe section' },
       { symbol: 'L', name: 'Pipe Length', unit: 'meters (m)', description: 'Total physical length of the pipe conduit' },
@@ -46,8 +46,7 @@ const FORMULAS: FormulaCard[] = [
     category: 'hydraulics',
     title: 'Nodal Mass Continuity (Kirchhoff\'s 1st Law)',
     subtitle: 'Conservation of Mass at Network Junctions',
-    latexDisplay: '\\sum Q_{\\text{in}} - \\sum Q_{\\text{out}} = q_{\\text{base}} \\cdot M(t) + q_{\\text{leak}}(t)',
-    latexRaw: '\\sum Q_{\\text{in}} - \\sum Q_{\\text{out}} = q_{\\text{base}} \\cdot M(t) + q_{\\text{leak}}(t)',
+    latex: '\\sum Q_{\\text{in}} - \\sum Q_{\\text{out}} = q_{\\text{base}} \\cdot M(t) + q_{\\text{leak}}(t)',
     variables: [
       { symbol: 'Σ Q_in', name: 'Total Inflow', unit: 'L/s', description: 'Sum of volumetric flow rates entering junction node' },
       { symbol: 'Σ Q_out', name: 'Total Outflow', unit: 'L/s', description: 'Sum of volumetric flow rates exiting junction node' },
@@ -66,8 +65,7 @@ const FORMULAS: FormulaCard[] = [
     category: 'hydraulics',
     title: 'Torricelli Pressure-Dependent Orifice Leak Flow',
     subtitle: 'Physical Hydraulics of Pipe Wall Rupture',
-    latexDisplay: 'Q_{\\text{leak}} = C_d \\cdot A_{\\text{orifice}} \\cdot \\sqrt{2g \\cdot \\max(0, \\, H_j - E_j)}',
-    latexRaw: 'Q_{\\text{leak}} = C_d \\cdot A_{\\text{orifice}} \\cdot \\sqrt{2g \\cdot \\max(0, \\, H_j - E_j)}',
+    latex: 'Q_{\\text{leak}} = C_d \\cdot A_{\\text{orifice}} \\cdot \\sqrt{2g \\cdot \\max(0, \\, H_j - E_j)}',
     variables: [
       { symbol: 'Q_leak', name: 'Leak Discharge Rate', unit: 'm³/s (or L/s)', description: 'Volume of water escaping per unit time' },
       { symbol: 'C_d', name: 'Discharge Coefficient', unit: 'dimensionless (0.75)', description: 'Empirical contraction and velocity loss coefficient' },
@@ -86,8 +84,7 @@ const FORMULAS: FormulaCard[] = [
     category: 'ml',
     title: 'Normalized Pressure Differential Vector',
     subtitle: '18-Dimensional Spatial Anomaly Feature Construction',
-    latexDisplay: '\\vec{x} = \\big[ P_{10}, P_{11}, \\dots, P_{32}, \\;\\; \\Delta P_{10}, \\Delta P_{11}, \\dots, \\Delta P_{32} \\big]^T \\in \\mathbb{R}^{18}',
-    latexRaw: '\\vec{x} = [ P_{10}, \\dots, P_{32}, \\Delta P_{10}, \\dots, \\Delta P_{32} ]^T, \\quad \\Delta P_i = P_{i,\\text{baseline}}(t) - P_{i,\\text{actual}}(t)',
+    latex: '\\vec{x} = \\begin{bmatrix} P_{10} & P_{11} & \\dots & P_{32} & \\Delta P_{10} & \\Delta P_{11} & \\dots & \\Delta P_{32} \\end{bmatrix}^T \\in \\mathbb{R}^{18}',
     variables: [
       { symbol: 'P_i', name: 'Absolute Pressure', unit: 'meters (m)', description: 'Real-time telemetry pressure head at junction i' },
       { symbol: 'ΔP_i', name: 'Differential Deficit', unit: 'meters (m)', description: 'Observed drop relative to expected baseline: P_baseline(t) - P_actual(t)' },
@@ -105,8 +102,7 @@ const FORMULAS: FormulaCard[] = [
     category: 'ml',
     title: 'Multiclass Random Forest Ensemble Classification',
     subtitle: 'Ensemble Decision Trees for Spatial Fault Localization',
-    latexDisplay: 'P(\\text{Class} = c \\mid \\vec{x}) = \\frac{1}{B} \\sum_{b=1}^{B} I\\big( T_b(\\vec{x}) = c \\big), \\quad c \\in \\{\\text{Normal}, \\text{Leak}_{10}, \\dots, \\text{Leak}_{32}\\}',
-    latexRaw: 'P(c \\mid \\vec{x}) = \\frac{1}{B} \\sum_{b=1}^{B} I(T_b(\\vec{x}) = c), \\quad P_{\\text{leak}} = 1.0 - P(\\text{Normal} \\mid \\vec{x})',
+    latex: 'P(\\text{Class} = c \\mid \\vec{x}) = \\frac{1}{B} \\sum_{b=1}^{B} I\\big( T_b(\\vec{x}) = c \\big), \\quad P_{\\text{leak}} = 1.0 - P(\\text{Normal} \\mid \\vec{x})',
     variables: [
       { symbol: 'B', name: 'Number of Trees', unit: '150 trees', description: 'Ensemble forest size with bootstrap aggregation (bagging)' },
       { symbol: 'T_b(x)', name: 'Individual Decision Tree', unit: 'estimator', description: 'Decision tree b trained on random feature subset (sqrt(18) = ~4 features)' },
@@ -124,8 +120,7 @@ const FORMULAS: FormulaCard[] = [
     category: 'forecasting',
     title: 'HistGradientBoosting Climatological Regressor',
     subtitle: 'Chennai Urban Water Demand Forecasting Formulation',
-    latexDisplay: '\\hat{D}(t, T, w) = \\sum_{m=1}^{M} f_m\\big( \\text{Hour}_t, \\; T, \\; w, \\; \\sin\\tfrac{2\\pi t}{24}, \\; \\cos\\tfrac{2\\pi t}{24} \\big)',
-    latexRaw: '\\hat{D}(t) = \\sum_{m=1}^{M} f_m(\\text{Hour}_t, T, w, \\sin(2\\pi t / 24), \\cos(2\\pi t / 24))',
+    latex: '\\hat{D}(t, T, w) = \\sum_{m=1}^{M} f_m\\!\\left( \\text{Hour}_t, \\; T, \\; w, \\; \\sin\\frac{2\\pi t}{24}, \\; \\cos\\frac{2\\pi t}{24} \\right)',
     variables: [
       { symbol: 'D_hat(t)', name: 'Predicted Demand', unit: 'Liters/sec (L/s)', description: 'Forecasted citywide municipal withdrawal rate at hour t' },
       { symbol: 'T', name: 'Ambient Temperature', unit: '°C (10°C to 42°C)', description: 'Simulated Chennai ambient temperature' },
@@ -144,8 +139,7 @@ const FORMULAS: FormulaCard[] = [
     category: 'forecasting',
     title: 'Coefficient of Determination (R² Goodness of Fit)',
     subtitle: 'Validation Metric for Demand Forecasting Precision',
-    latexDisplay: 'R^2 = 1 - \\frac{\\sum_{i=1}^{N} (y_i - \\hat{y}_i)^2}{\\sum_{i=1}^{N} (y_i - \\bar{y})^2} = 98.41\\%',
-    latexRaw: 'R^2 = 1 - \\frac{\\sum (y_i - \\hat{y}_i)^2}{\\sum (y_i - \\bar{y})^2} = 0.9841',
+    latex: 'R^2 = 1 - \\frac{\\sum_{i=1}^{N} (y_i - \\hat{y}_i)^2}{\\sum_{i=1}^{N} (y_i - \\bar{y})^2} = 98.41\\%',
     variables: [
       { symbol: 'y_i', name: 'Actual Ground Truth', unit: 'L/s', description: 'Recorded Chennai empirical demand record' },
       { symbol: 'y_hat_i', name: 'Model Prediction', unit: 'L/s', description: 'HistGradientBoosting forecasted value' },
@@ -163,8 +157,7 @@ const FORMULAS: FormulaCard[] = [
     category: 'disambiguation',
     title: 'Dual-Hypothesis Hydraulic Divergence Formulation',
     subtitle: 'Disambiguating Thermal Heatwave Surges from Underground Pipe Breaches',
-    latexDisplay: '\\Delta H_{\\text{obs}} = \\underbrace{\\beta_{\\text{temp}} \\cdot (T - 25^{\\circ})}_{\\text{Uniform Climatological Draw}} + \\underbrace{\\frac{Q_{\\text{leak}}^2}{2g C_d^2 A^2}}_{\\text{Localized Breach Singularity}}',
-    latexRaw: '\\Delta H_{\\text{obs}} = \\beta_{\\text{temp}} \\cdot (T - 25) + \\frac{Q_{\\text{leak}}^2}{2g C_d^2 A^2}',
+    latex: '\\Delta H_{\\text{obs}} = \\underbrace{\\beta_{\\text{temp}} \\cdot (T - 25^{\\circ})}_{\\text{Uniform Climatological Draw}} + \\underbrace{\\frac{Q_{\\text{leak}}^2}{2g C_d^2 A^2}}_{\\text{Localized Breach Singularity}}',
     variables: [
       { symbol: 'ΔH_obs', name: 'Observed Head Drop', unit: 'meters (m)', description: 'Total pressure drop measured by telemetry SCADA' },
       { symbol: 'β_temp', name: 'Thermal Sensitivity', unit: 'm/°C', description: 'Network-wide uniform head deficit due to heatwave water usage' },
@@ -178,7 +171,32 @@ const FORMULAS: FormulaCard[] = [
   },
 ];
 
-export const EngineeringFormulationsView: React.FC = () => {
+// Helper component that renders proper mathematical notation via KaTeX
+const MathFormula: React.FC<{ math: string; displayMode?: boolean }> = ({ math, displayMode = true }) => {
+  const html = React.useMemo(() => {
+    try {
+      return katex.renderToString(math, {
+        displayMode,
+        throwOnError: false,
+      });
+    } catch (e) {
+      return `<span class="text-red-400 font-mono">${math}</span>`;
+    }
+  }, [math, displayMode]);
+
+  return (
+    <div
+      className="katex-rendered overflow-x-auto py-1 text-zinc-100 flex items-center justify-center"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+};
+
+interface EngineeringFormulationsViewProps {
+  onBack?: () => void;
+}
+
+export const EngineeringFormulationsView: React.FC<EngineeringFormulationsViewProps> = ({ onBack }) => {
   const [activeCategory, setActiveCategory] = useState<'all' | 'hydraulics' | 'ml' | 'forecasting' | 'disambiguation'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -198,6 +216,15 @@ export const EngineeringFormulationsView: React.FC = () => {
       <div className="bg-[#000000]/90 rounded-lg border border-zinc-800 p-6 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-2 rounded-md bg-[#09090b] hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                title="Back to Dashboard"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center">
               <Sigma className="w-5 h-5" />
             </div>
@@ -288,7 +315,7 @@ export const EngineeringFormulationsView: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => handleCopyLatex(formula.id, formula.latexRaw)}
+                  onClick={() => handleCopyLatex(formula.id, formula.latex)}
                   title="Copy LaTeX formula"
                   className="flex items-center gap-1 px-2 py-1 rounded bg-[#09090b] hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] transition-all cursor-pointer"
                 >
@@ -306,11 +333,9 @@ export const EngineeringFormulationsView: React.FC = () => {
                 </button>
               </div>
 
-              {/* Rendered Equation Block */}
-              <div className="bg-[#09090b] border border-zinc-800/90 rounded-md p-4 my-3 flex items-center justify-center text-center overflow-x-auto">
-                <code className="text-cyan-300 font-mono text-sm tracking-wide py-1 block">
-                  {formula.latexDisplay}
-                </code>
+              {/* Rendered KaTeX Equation Block */}
+              <div className="bg-[#09090b] border border-zinc-800/90 rounded-md p-4 my-3 flex items-center justify-center text-center overflow-x-auto min-h-[72px]">
+                <MathFormula math={formula.latex} displayMode={true} />
               </div>
 
               {/* Variable Legend Table */}
