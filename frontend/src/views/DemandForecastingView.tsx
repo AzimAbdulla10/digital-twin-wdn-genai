@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import type { DemandForecastResponse, RiskAssessment } from '../types';
 import { fetchDemandForecast } from '../api';
-import { AIOverviewBanner } from '../components/AIOverviewBanner';
+import { AIOverviewCard } from '../components/AIOverviewCard';
 import {
   TrendingUp,
   Sun,
@@ -70,17 +70,6 @@ export const DemandForecastingView: React.FC<DemandForecastingViewProps> = ({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Top Banner: Chennai Municipal Demand AI Intelligence */}
-      <AIOverviewBanner
-        viewContext="demand-forecasting"
-        title="24-Hour Municipal Demand AI Intelligence"
-        currentTimestep={currentTimestep}
-        temperature={temperature}
-        isWeekend={isWeekend}
-        riskAssessment={riskAssessment}
-        forecastData={forecastData}
-      />
-
       {/* KPI Stats Grid (4 Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Peak Demand Card */}
@@ -148,109 +137,127 @@ export const DemandForecastingView: React.FC<DemandForecastingViewProps> = ({
         </div>
       </div>
 
-      {/* Main Full-Width Forecast Chart */}
-      <div className="bg-[#000000]/90 rounded-lg border border-zinc-800 p-6 flex flex-col ">
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="p-2 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            <TrendingUp className="w-5 h-5" />
-          </div>
+      {/* Main Grid: Forecast Curve (8 Cols) + Side AI Overview Card (4 Cols) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Forecast Curve Chart */}
+        <div className="lg:col-span-8 bg-[#000000]/90 rounded-lg border border-zinc-800 p-6 flex flex-col justify-between">
           <div>
-            <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-              24-Hour Predictive Municipal Demand Curve
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
-                HistGradientBoostingRegressor
-              </span>
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin text-purple-400" />}
-            </h2>
-            <p className="text-xs text-zinc-400">
-              Weather-correlated time-series regression with 95% confidence intervals
-            </p>
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="p-2 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-zinc-100 flex items-center gap-2">
+                  24-Hour Predictive Municipal Demand Curve
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
+                    HistGradientBoostingRegressor
+                  </span>
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin text-purple-400" />}
+                </h2>
+                <p className="text-xs text-zinc-400">
+                  Weather-correlated time-series regression with 95% confidence intervals
+                </p>
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-3 mb-4 bg-red-950/40 border border-red-500/30 rounded-md text-red-300 text-xs">
+                {error}
+              </div>
+            )}
+          </div>
+
+          {/* Recharts Area */}
+          <div className="w-full h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 15, right: 15, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="forecastGradLarge" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#c084fc" stopOpacity={0.45} />
+                    <stop offset="95%" stopColor="#c084fc" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <XAxis dataKey="hour" stroke="#64748b" fontSize={12} tickLine={false} />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={12}
+                  tickLine={false}
+                  domain={['auto', 'auto']}
+                  unit=" L/s"
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#090d16',
+                    borderColor: '#1e293b',
+                    borderRadius: '0.75rem',
+                    fontSize: '12px',
+                    color: '#f8fafc',
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+
+                <ReferenceLine
+                  x={`${currentTimestep.toString().padStart(2, '0')}:00`}
+                  stroke="#e2e8f0"
+                  strokeDasharray="4 4"
+                  label={{
+                    value: `Timeline: ${currentTimestep}:00`,
+                    fill: '#94a3b8',
+                    fontSize: 11,
+                    position: 'insideTopLeft',
+                  }}
+                />
+
+                {/* Upper Confidence Band */}
+                <Area
+                  type="monotone"
+                  dataKey="upper"
+                  name="95% Upper Confidence Bound"
+                  stroke="#a855f7"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  fillOpacity={0}
+                />
+
+                {/* Main Forecast Curve */}
+                <Area
+                  type="monotone"
+                  dataKey="demand"
+                  name="ML Predicted Demand"
+                  stroke="#c084fc"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#forecastGradLarge)"
+                />
+
+                {/* Lower Confidence Band */}
+                <Area
+                  type="monotone"
+                  dataKey="lower"
+                  name="95% Lower Confidence Bound"
+                  stroke="#a855f7"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  fillOpacity={0}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {error && (
-          <div className="p-3 mb-4 bg-red-950/40 border border-red-500/30 rounded-md text-red-300 text-xs">
-            {error}
-          </div>
-        )}
-
-        {/* Recharts Area */}
-        <div className="w-full h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 15, right: 15, left: -10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="forecastGradLarge" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#c084fc" stopOpacity={0.45} />
-                  <stop offset="95%" stopColor="#c084fc" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis dataKey="hour" stroke="#64748b" fontSize={12} tickLine={false} />
-              <YAxis
-                stroke="#64748b"
-                fontSize={12}
-                tickLine={false}
-                domain={['auto', 'auto']}
-                unit=" L/s"
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#090d16',
-                  borderColor: '#1e293b',
-                  borderRadius: '0.75rem',
-                  fontSize: '12px',
-                  color: '#f8fafc',
-                }}
-              />
-              <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-
-              <ReferenceLine
-                x={`${currentTimestep.toString().padStart(2, '0')}:00`}
-                stroke="#e2e8f0"
-                strokeDasharray="4 4"
-                label={{
-                  value: `Timeline: ${currentTimestep}:00`,
-                  fill: '#94a3b8',
-                  fontSize: 11,
-                  position: 'insideTopLeft',
-                }}
-              />
-
-              {/* Upper Confidence Band */}
-              <Area
-                type="monotone"
-                dataKey="upper"
-                name="95% Upper Confidence Bound"
-                stroke="#a855f7"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                fillOpacity={0}
-              />
-
-              {/* Main Forecast Curve */}
-              <Area
-                type="monotone"
-                dataKey="demand"
-                name="ML Predicted Demand"
-                stroke="#c084fc"
-                strokeWidth={3}
-                fillOpacity={1}
-                fill="url(#forecastGradLarge)"
-              />
-
-              {/* Lower Confidence Band */}
-              <Area
-                type="monotone"
-                dataKey="lower"
-                name="95% Lower Confidence Bound"
-                stroke="#a855f7"
-                strokeWidth={1.5}
-                strokeDasharray="4 4"
-                fillOpacity={0}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        {/* Side AI Overview Card */}
+        <div className="lg:col-span-4 flex flex-col">
+          <AIOverviewCard
+            viewContext="demand-forecasting"
+            title="Daily Water Summary"
+            currentTimestep={currentTimestep}
+            temperature={temperature}
+            isWeekend={isWeekend}
+            riskAssessment={riskAssessment}
+            forecastData={forecastData}
+          />
         </div>
       </div>
 

@@ -10,7 +10,7 @@ import { NetworkMap } from '../components/NetworkMap';
 import { PressureChart } from '../components/PressureChart';
 import { LeakControlPanel } from '../components/LeakControlPanel';
 import { AIAlertCard } from '../components/AIAlertCard';
-import { AIOverviewBanner } from '../components/AIOverviewBanner';
+import { AIOverviewCard } from '../components/AIOverviewCard';
 import { Layers } from 'lucide-react';
 
 interface HydraulicTwinViewProps {
@@ -62,20 +62,6 @@ export const HydraulicTwinView: React.FC<HydraulicTwinViewProps> = ({
 
   return (
     <div>
-      {/* Top Banner: Real-Time Cyber-Physical Network Intelligence */}
-      <AIOverviewBanner
-        viewContext="hydraulic-twin"
-        title="Live Hydraulic Twin AI Overview"
-        currentTimestep={currentTimestep}
-        temperature={temperature}
-        isWeekend={isWeekend}
-        leakNodeId={leakNodeId}
-        currentPressures={currentPressures}
-        aiAlert={aiAlert}
-        riskAssessment={currentResults?.risk_assessment}
-        disambiguation={currentResults?.disambiguation}
-      />
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left Column: Network Map & Pressure Time-Series (7 Cols) */}
       <div className="lg:col-span-7 flex flex-col gap-6">
@@ -111,8 +97,22 @@ export const HydraulicTwinView: React.FC<HydraulicTwinViewProps> = ({
         </div>
       </div>
 
-      {/* Right Column: AI Diagnostics, Leak Sandbox & Inspector (5 Cols) */}
+      {/* Right Column: AI Overview, AI Diagnostics, Leak Sandbox & Inspector (5 Cols) */}
       <div className="lg:col-span-5 flex flex-col gap-6">
+        {/* Simplified AI Overview Card */}
+        <AIOverviewCard
+          viewContext="hydraulic-twin"
+          title="AI Network Summary"
+          currentTimestep={currentTimestep}
+          temperature={temperature}
+          isWeekend={isWeekend}
+          leakNodeId={leakNodeId}
+          currentPressures={currentPressures}
+          aiAlert={aiAlert}
+          riskAssessment={currentResults?.risk_assessment}
+          disambiguation={currentResults?.disambiguation}
+        />
+
         {/* AI Diagnostic Alert Card */}
         <AIAlertCard
           alert={aiAlert}
